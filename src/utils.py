@@ -24,5 +24,22 @@ def load_xlsx_transactions(file_path: str, sheet_name: Union[str, int] = 0) -> p
     return transactions_data
 
 
+def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
+    """Рассчитывает статистику по каждой карте: сумма расходов и кешбэк в рублях."""
+    expense = df.loc[(df["Статус"] == "OK") & (df["Сумма операции"] < 0) & (df["Валюта операции"] == "RUB")].copy()
+    expense["Сумма операции"] = expense["Сумма операции"].abs()
+    expenses_by_cards = expense.groupby("Номер карты")["Сумма операции"].sum()
+
+    result_list = []
+
+    for card_number, expense in expenses_by_cards.items():
+        result_list.append(
+            {"last_digits": str(card_number)[-4:], "total_spent": expense, "cashback": round(expense / 100, 2)}
+        )
+
+    return result_list
+
+
 if __name__ == "__main__":
-    pass
+    transactions = load_xlsx_transactions("data/operations.xlsx")
+    print(calculate_card_statistics(transactions))
