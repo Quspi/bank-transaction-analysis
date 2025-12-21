@@ -34,7 +34,11 @@ def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
 
     for card_number, expense in expenses_by_cards.items():
         result_list.append(
-            {"last_digits": str(card_number)[-4:], "total_spent": expense, "cashback": round(expense / 100, 2)}
+            {
+                "last_digits": str(card_number)[-4:],
+                "total_spent": round(expense, 2),
+                "cashback": round(expense / 100, 2),
+            }
         )
 
     return result_list
@@ -56,4 +60,3 @@ if __name__ == "__main__":
     filtered = filter_transactions_by_month(transactions, "2021-12-22 21:40:59")
     print(filtered.head(5))
     print(calculate_card_statistics(filtered))
-
