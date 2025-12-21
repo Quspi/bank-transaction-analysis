@@ -1,4 +1,7 @@
 import datetime
+from typing import Union
+
+import pandas as pd
 
 
 def get_greetings() -> str:
@@ -13,6 +16,12 @@ def get_greetings() -> str:
         return "Добрый вечер"
     else:
         return "Доброй ночи"
+
+
+def load_xlsx_transactions(file_path: str, sheet_name: Union[str, int] = 0) -> pd.DataFrame:
+    """Получает данные о транзакциях из xlsx файла и возвращает DataFrame."""
+    transactions_data = pd.read_excel(file_path, sheet_name=sheet_name)
+    return transactions_data
 
 
 if __name__ == "__main__":
