@@ -40,6 +40,20 @@ def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
     return result_list
 
 
+def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataFrame:
+    """Возвращает транзакции с начала месяца (1-е число) до указанной даты включительно."""
+    end_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    start_date = end_date.replace(day=1)
+
+    df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+    filter_by_month = df.loc[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
+
+    return filter_by_month
+
+
 if __name__ == "__main__":
     transactions = load_xlsx_transactions("data/operations.xlsx")
-    print(calculate_card_statistics(transactions))
+    filtered = filter_transactions_by_month(transactions, "2021-12-22 21:40:59")
+    print(filtered.head(5))
+    print(calculate_card_statistics(filtered))
+
