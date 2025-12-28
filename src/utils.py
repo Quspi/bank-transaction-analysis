@@ -177,11 +177,8 @@ def get_exchange_rates(currencies: list[str]) -> list[dict]:
 
 
 def get_stock_prices(stocks: list[str]) -> list[dict]:
-    """Получает стоимость акций компаний указанных в stocks (до 5 акций за раз)."""
+    """Получает стоимость акций компаний указанных в stocks."""
     result: list[dict] = []
-
-    if len(stocks) > 5:
-        raise ValueError("Можно загрузить стоимость не более 5 акций за раз.")
 
     if not stocks:
         return result
