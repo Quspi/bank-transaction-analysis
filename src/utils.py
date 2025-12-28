@@ -47,17 +47,23 @@ def load_user_settings(file_path: str) -> dict[str, list[str]]:
     """Загружает настройки пользователя из json файла."""
     try:
         with open(file_path, "r", encoding="utf-8") as file:
+            logger.info(f"Открыт файл {file_path}")
             try:
                 user_settings: dict[str, list[str]] = json.load(file)
-            except json.JSONDecodeError:
+                logger.info(f"Загружены настройки пользователя из {file_path}")
+            except json.JSONDecodeError as error:
+                logger.error(f"Ошибка декодирования {error}", exc_info=True)
                 raise ValueError("Файл повреждён или пуст.")
 
             if "user_currencies" in user_settings and "user_stocks" in user_settings:
+                logger.info(f"currencies: {user_settings['user_currencies']}, stocks: {user_settings['user_stocks']}")
                 return user_settings
             else:
+                logger.error(f"Ошибка в структуре данных файла {file_path}", exc_info=True)
                 raise ValueError("Ошибка в структуре данных.")
 
     except FileNotFoundError:
+        logger.error(f"Файл {file_path} не найден или удален", exc_info=True)
         raise ValueError("Файл не найден или удален.")
 
 
