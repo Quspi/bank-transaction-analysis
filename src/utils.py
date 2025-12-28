@@ -102,9 +102,11 @@ def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
     try:
         expense = df.loc[(df["Статус"] == "OK") & (df["Сумма операции"] < 0) & (df["Валюта операции"] == "RUB")].copy()
         expense["Сумма операции"] = expense["Сумма операции"].abs()
+        logger.info(f"Отфильтровано {len(expense)} транзакций")
         expenses_by_cards = expense.groupby("Номер карты")["Сумма операции"].sum()
 
     except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
         raise KeyError("Ошибка в структуре данных.")
 
     result_list = []
@@ -118,6 +120,7 @@ def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
             }
         )
 
+    logger.info(f"Успешно рассчитана статистика по картам, всего карт: {len(result_list)}")
     return result_list
 
 
