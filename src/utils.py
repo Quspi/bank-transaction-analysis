@@ -1,8 +1,12 @@
 import datetime
+import os
 from typing import Union
 
 import pandas as pd
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def get_greetings() -> str:
@@ -126,7 +130,45 @@ def get_exchange_rates(currencies: list[str]) -> list[dict]:
     return result
 
 
+def get_stock_prices(stocks: list[str]) -> list[dict]:
+    """Получает стоимость акций компаний указанных в stocks (до 5 акций за раз)."""
+    result: list[dict] = []
+
+    if len(stocks) > 5:
+        raise ValueError("Можно загрузить стоимость не более 5 акций за раз.")
+
+    if not stocks:
+        return result
+
+    url = "https://www.alphavantage.co/query"
+    api_key = os.getenv("API_KEY")
+
+    for stock in stocks:
+        params = {"function": "GLOBAL_QUOTE", "symbol": stock, "apikey": api_key}
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+
+        except requests.exceptions.HTTPError:
+            continue
+        except requests.exceptions.ConnectionError:
+            continue
+        except requests.exceptions.Timeout:
+            continue
+
+        stock_data = response.json().get("Global Quote")
+
+        if not stock_data:
+            continue
+
+        result.append(
+            {"stock": stock_data["01. symbol"], "currency": "USD", "price": round(float(stock_data["05. price"]), 2)}
+        )
+
+    return result
+
+
 if __name__ == "__main__":
     transactions = load_xlsx_transactions("data/operations.xlsx")
     filtered = filter_transactions_by_month(transactions, "2021-12-22 21:40:59")
-    print(get_exchange_rates(["EUR", "USD"]))
+    print(get_stock_prices(["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"]))
