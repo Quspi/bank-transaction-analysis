@@ -1,11 +1,13 @@
 import datetime
 import json
 import os
-from typing import Union
+from typing import Any, Union
 
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+
+from config import TRANSACTIONS_PATH, USER_SETTINGS_PATH
 
 load_dotenv()
 
@@ -208,7 +210,27 @@ def get_stock_prices(stocks: list[str]) -> list[dict]:
     return result
 
 
-if __name__ == "__main__":
-    transactions = load_xlsx_transactions("data/operations.xlsx")
-    filtered = filter_transactions_by_month(transactions, "2021-12-22 21:40:59")
-    load_user_settings("user_settings.json")
+def collect_data_for_main_page(date: str) -> dict[str, Any]:
+    """Собирает данные о транзакциях в словарь для страницы `Главная`."""
+    greeting = get_greetings()
+    transactions = load_xlsx_transactions(TRANSACTIONS_PATH)
+    filtered_by_date = filter_transactions_by_month(transactions, date)
+    cards = calculate_card_statistics(filtered_by_date)
+    top_transactions = get_top_transactions(filtered_by_date)
+
+    user_settings = load_user_settings(USER_SETTINGS_PATH)
+    user_currencies = get_currencies(user_settings)
+    user_stocks = get_stocks(user_settings)
+
+    currency_rates = get_exchange_rates(user_currencies)
+    stock_prices = get_stock_prices(user_stocks)
+
+    result_dict = {
+        "greeting": greeting,
+        "cards": cards,
+        "top_transactions": top_transactions,
+        "currency_rates": currency_rates,
+        "stock_prices": stock_prices,
+    }
+
+    return result_dict
