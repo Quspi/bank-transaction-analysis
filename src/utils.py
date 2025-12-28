@@ -130,9 +130,11 @@ def get_top_transactions(df: pd.DataFrame) -> list[dict]:
         filtered_df = df.loc[(df["Статус"] == "OK") & (df["Валюта операции"] == "RUB")]
         filtered_df["abs_amount"] = filtered_df["Сумма операции"].abs()
         filtered_df["Дата операции"] = filtered_df["Дата операции"].dt.strftime("%d.%m.%Y")
+        logger.info(f"Отфильтровано {len(filtered_df)} транзакций")
         top_5_df = filtered_df.nlargest(5, "abs_amount")
 
     except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
         raise KeyError("Ошибка в структуре данных.")
 
     result = (
@@ -148,6 +150,7 @@ def get_top_transactions(df: pd.DataFrame) -> list[dict]:
         .to_dict(orient="records")
     )
 
+    logger.info("Успешно рассчитаны топ 5 транзакций по сумме платежа")
     return result
 
 
