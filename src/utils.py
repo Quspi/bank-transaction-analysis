@@ -55,6 +55,33 @@ def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
     return result_list
 
 
+def get_top_transactions(df: pd.DataFrame) -> list[dict]:
+    """Рассчитывает топ 5 транзакций по сумме платежа."""
+    try:
+        filtered_df = df.loc[(df["Статус"] == "OK") & (df["Валюта операции"] == "RUB")]
+        filtered_df["abs_amount"] = filtered_df["Сумма операции"].abs()
+        filtered_df["Дата операции"] = filtered_df["Дата операции"].dt.strftime("%d.%m.%Y")
+        top_5_df = filtered_df.nlargest(5, "abs_amount")
+
+    except KeyError:
+        raise KeyError("Ошибка в структуре данных.")
+
+    result = (
+        top_5_df[["Дата операции", "Сумма операции", "Категория", "Описание"]]
+        .rename(
+            columns={
+                "Дата операции": "date",
+                "Сумма операции": "amount",
+                "Категория": "category",
+                "Описание": "description",
+            }
+        )
+        .to_dict(orient="records")
+    )
+
+    return result
+
+
 def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataFrame:
     """Возвращает транзакции с начала месяца (1-е число) до указанной даты включительно."""
     end_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
@@ -69,5 +96,4 @@ def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataF
 if __name__ == "__main__":
     transactions = load_xlsx_transactions("data/operations.xlsx")
     filtered = filter_transactions_by_month(transactions, "2021-12-22 21:40:59")
-    print(filtered.head(5))
-    print(calculate_card_statistics(filtered))
+    print(get_top_transactions(filtered))
