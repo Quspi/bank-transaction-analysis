@@ -33,9 +33,13 @@ def load_xlsx_transactions(file_path: str, sheet_name: Union[str, int] = 0) -> p
 
 def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
     """Рассчитывает статистику по каждой карте: сумма расходов и кешбэк в рублях."""
-    expense = df.loc[(df["Статус"] == "OK") & (df["Сумма операции"] < 0) & (df["Валюта операции"] == "RUB")].copy()
-    expense["Сумма операции"] = expense["Сумма операции"].abs()
-    expenses_by_cards = expense.groupby("Номер карты")["Сумма операции"].sum()
+    try:
+        expense = df.loc[(df["Статус"] == "OK") & (df["Сумма операции"] < 0) & (df["Валюта операции"] == "RUB")].copy()
+        expense["Сумма операции"] = expense["Сумма операции"].abs()
+        expenses_by_cards = expense.groupby("Номер карты")["Сумма операции"].sum()
+
+    except KeyError:
+        raise KeyError("Ошибка в структуре данных.")
 
     result_list = []
 
