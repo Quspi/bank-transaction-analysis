@@ -90,6 +90,9 @@ def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataF
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
     filter_by_month = df.loc[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
 
+    if filter_by_month.empty:
+        raise ValueError("Транзакций за указанный период не найдено.")
+
     return filter_by_month
 
 
