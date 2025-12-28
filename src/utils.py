@@ -31,13 +31,16 @@ def get_greetings() -> str:
     now_hour = datetime.datetime.now().hour
 
     if 5 <= now_hour < 11:
-        return "Доброе утро"
+        greeting = "Доброе утро"
     elif 11 <= now_hour < 16:
-        return "Добрый день"
+        greeting = "Добрый день"
     elif 16 <= now_hour < 23:
-        return "Добрый вечер"
+        greeting = "Добрый вечер"
     else:
-        return "Доброй ночи"
+        greeting = "Доброй ночи"
+
+    logger.info(f"Сгенерировано приветствие {greeting} для часа {now_hour}")
+    return greeting
 
 
 def load_user_settings(file_path: str) -> dict[str, list[str]]:
