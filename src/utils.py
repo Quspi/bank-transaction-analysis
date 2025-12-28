@@ -2,6 +2,7 @@ import datetime
 from typing import Union
 
 import pandas as pd
+import requests
 
 
 def get_greetings() -> str:
@@ -96,7 +97,36 @@ def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataF
     return filter_by_month
 
 
+def get_exchange_rates(currencies: list[str]) -> list[dict]:
+    """Получает курсы валют в RUB указанные в currencies."""
+    result: list[dict] = []
+
+    if not currencies:
+        return result
+
+    url = "https://www.cbr-xml-daily.ru/daily_json.js"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as error:
+        raise ConnectionError(f"Ошибка при запросе: {error}.")
+
+    currencies_data = response.json().get("Valute", {})
+
+    for currency in currencies:
+        if currency in currencies_data:
+            result.append(
+                {
+                    "currency": currencies_data[currency]["CharCode"],
+                    "rate": round(currencies_data[currency]["Value"], 2),
+                }
+            )
+
+    return result
+
+
 if __name__ == "__main__":
     transactions = load_xlsx_transactions("data/operations.xlsx")
     filtered = filter_transactions_by_month(transactions, "2021-12-22 21:40:59")
-    print(get_top_transactions(filtered))
+    print(get_exchange_rates(["EUR", "USD"]))
