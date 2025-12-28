@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 import time
 from typing import Any, Union
@@ -14,6 +15,15 @@ load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TRANSACTIONS_PATH = os.path.join(BASE_DIR, "data", "operations.xlsx")
 USER_SETTINGS_PATH = os.path.join(BASE_DIR, "user_settings.json")
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler("logs/utils.log", "a", encoding="utf-8")
+formatter = logging.Formatter(
+    "%(asctime)s: %(name)s: %(funcName)s: %(levelname)s: %(message)s", datefmt="%Y.%m.%d %H:%M:%S"
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def get_greetings() -> str:
