@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import time
 from typing import Any, Union
 
 import pandas as pd
@@ -193,12 +194,16 @@ def get_stock_prices(stocks: list[str]) -> list[dict]:
         try:
             response = requests.get(url, params=params)
             response.raise_for_status()
+            time.sleep(12)
 
         except requests.exceptions.HTTPError:
+            time.sleep(12)
             continue
         except requests.exceptions.ConnectionError:
+            time.sleep(12)
             continue
         except requests.exceptions.Timeout:
+            time.sleep(12)
             continue
 
         stock_data = response.json().get("Global Quote")
