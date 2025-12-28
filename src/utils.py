@@ -41,6 +41,12 @@ def load_user_settings(file_path: str) -> dict[str, list[str]]:
         raise ValueError("Файл не найден или удален.")
 
 
+def get_currencies(user_settings: dict[str, list[str]]) -> list[str]:
+    """Получает список валют пользователя для отслеживания курса."""
+    result = user_settings["user_currencies"]
+    return result
+
+
 def load_xlsx_transactions(file_path: str, sheet_name: Union[str, int] = 0) -> pd.DataFrame:
     """Получает данные о транзакциях из xlsx файла и возвращает DataFrame."""
     try:
