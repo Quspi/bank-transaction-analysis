@@ -161,12 +161,16 @@ def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataF
 
     try:
         df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+        logger.info("Даты успешно преобразованы в datetime, формат: %d.%m.%Y %H:%M:%S")
         filter_by_month = df.loc[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
+        logger.info(f"Успешно отфильтровано по дате: {date_string}, всего транзакций: {len(filter_by_month)}")
 
     except KeyError:
+        logger.error("Ошибка в структуре данных", exc_info=True)
         raise KeyError("Ошибка в структуре данных.")
 
     if filter_by_month.empty:
+        logger.error("Транзакций за указанный период не найдено", exc_info=True)
         raise ValueError("Транзакций за указанный период не найдено.")
 
     return filter_by_month
