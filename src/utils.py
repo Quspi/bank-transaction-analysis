@@ -1,7 +1,7 @@
 import datetime
 import os
 from typing import Union
-
+import json
 import pandas as pd
 import requests
 from dotenv import load_dotenv
@@ -21,6 +21,24 @@ def get_greetings() -> str:
         return "Добрый вечер"
     else:
         return "Доброй ночи"
+
+
+def load_user_settings(file_path: str) -> dict[str, list[str]]:
+    """Загружает настройки пользователя из json файла."""
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            try:
+                user_settings = json.load(file)
+            except json.JSONDecodeError:
+                raise ValueError("Файл повреждён или пуст.")
+
+            if "user_currencies" in user_settings and "user_stocks" in user_settings:
+                return user_settings
+            else:
+                raise ValueError("Ошибка в структуре данных.")
+
+    except FileNotFoundError:
+        raise ValueError("Файл не найден или удален.")
 
 
 def load_xlsx_transactions(file_path: str, sheet_name: Union[str, int] = 0) -> pd.DataFrame:
@@ -180,4 +198,4 @@ def get_stock_prices(stocks: list[str]) -> list[dict]:
 if __name__ == "__main__":
     transactions = load_xlsx_transactions("data/operations.xlsx")
     filtered = filter_transactions_by_month(transactions, "2021-12-22 21:40:59")
-    print(get_stock_prices(["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"]))
+    load_user_settings("user_settings.json")
