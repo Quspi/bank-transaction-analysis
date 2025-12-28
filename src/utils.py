@@ -20,8 +20,15 @@ def get_greetings() -> str:
 
 def load_xlsx_transactions(file_path: str, sheet_name: Union[str, int] = 0) -> pd.DataFrame:
     """Получает данные о транзакциях из xlsx файла и возвращает DataFrame."""
-    transactions_data = pd.read_excel(file_path, sheet_name=sheet_name)
-    return transactions_data
+    try:
+        transactions_data = pd.read_excel(file_path, sheet_name=sheet_name)
+        return transactions_data
+
+    except FileNotFoundError:
+        raise ValueError("Файл не найден или удален.")
+
+    except pd.errors.EmptyDataError:
+        raise ValueError("Файл не содержит данные.")
 
 
 def calculate_card_statistics(df: pd.DataFrame) -> list[dict]:
