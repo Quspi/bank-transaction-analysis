@@ -222,6 +222,7 @@ def get_stock_prices(stocks: list[str]) -> list[dict]:
     result: list[dict] = []
 
     if not stocks:
+        logger.warning("Не найдено акций для получения стоимости")
         return result
 
     url = "https://www.alphavantage.co/query"
@@ -234,25 +235,32 @@ def get_stock_prices(stocks: list[str]) -> list[dict]:
             response.raise_for_status()
             time.sleep(12)
 
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as error:
+            status_code = error.response.status_code
+            logger.error(f"HTTP ошибка, код: {status_code}", exc_info=True)
             time.sleep(12)
             continue
         except requests.exceptions.ConnectionError:
+            logger.error("Ошибка соединения", exc_info=True)
             time.sleep(12)
             continue
         except requests.exceptions.Timeout:
+            logger.error("Время запроса истекло", exc_info=True)
             time.sleep(12)
             continue
 
         stock_data = response.json().get("Global Quote")
+        logger.info(f"Успешно получены данные о {stock}")
 
         if not stock_data:
+            logger.warning(f"Нет данных об акции {stock}")
             continue
 
         result.append(
             {"stock": stock_data["01. symbol"], "currency": "USD", "price": round(float(stock_data["05. price"]), 2)}
         )
 
+    logger.info(f"Успешно получены данные для {len(result)} акций")
     return result
 
 
