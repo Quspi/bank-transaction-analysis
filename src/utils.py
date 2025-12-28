@@ -181,22 +181,28 @@ def get_exchange_rates(currencies: list[str]) -> list[dict]:
     result: list[dict] = []
 
     if not currencies:
+        logger.warning("Не найдено валют для получения курса")
         return result
 
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
     try:
         response = requests.get(url)
         response.raise_for_status()
+        logger.info("Успешный GET запрос")
 
     except requests.exceptions.HTTPError as error:
         status_code = error.response.status_code
+        logger.error(f"HTTP ошибка, код: {status_code}", exc_info=True)
         raise ConnectionError(f"HTTP ошибка, код ошибки: {status_code}.")
     except requests.exceptions.ConnectionError as error:
+        logger.error(f"Ошибка соединения", exc_info=True)
         raise ConnectionError(f"Ошибка соединения: {error}.")
     except requests.exceptions.Timeout as error:
+        logger.error(f"Время запроса истекло", exc_info=True)
         raise TimeoutError(f"Таймаут запроса: {error}.")
 
     currencies_data = response.json().get("Valute", {})
+    logger.info("Курсы валют успешно загружены")
 
     for currency in currencies:
         if currency in currencies_data:
@@ -207,6 +213,7 @@ def get_exchange_rates(currencies: list[str]) -> list[dict]:
                 }
             )
 
+    logger.info(f"Добавлены курсы для {len(result)} валют")
     return result
 
 
