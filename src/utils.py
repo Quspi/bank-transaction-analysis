@@ -286,5 +286,6 @@ def collect_data_for_main_page(date: str) -> dict[str, Any]:
         "currency_rates": currency_rates,
         "stock_prices": stock_prices,
     }
+    logger.info(f"Формирование данных для даты {date} успешно завершено")
 
     return result_dict
