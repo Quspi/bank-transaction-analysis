@@ -70,6 +70,7 @@ def load_user_settings(file_path: str) -> dict[str, list[str]]:
 def get_currencies(user_settings: dict[str, list[str]]) -> list[str]:
     """Получает список валют пользователя для отслеживания курса."""
     result = user_settings["user_currencies"]
+    logger.info(f"{len(result)} валют для отслеживания")
     return result
 
 
