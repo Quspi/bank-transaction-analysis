@@ -77,6 +77,7 @@ def get_currencies(user_settings: dict[str, list[str]]) -> list[str]:
 def get_stocks(user_settings: dict[str, list[str]]) -> list[str]:
     """Получает список акций пользователя для отслеживания курса."""
     result = user_settings["user_stocks"]
+    logger.info(f"{len(result)} акций для отслеживания")
     return result
 
 
