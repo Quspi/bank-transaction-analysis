@@ -85,12 +85,15 @@ def load_xlsx_transactions(file_path: str, sheet_name: Union[str, int] = 0) -> p
     """Получает данные о транзакциях из xlsx файла и возвращает DataFrame."""
     try:
         transactions_data = pd.read_excel(file_path, sheet_name=sheet_name)
+        logger.info(f"Транзакции успешно загружены из {file_path}, лист {sheet_name}")
         return transactions_data
 
     except FileNotFoundError:
+        logger.error(f"Файл {file_path} не найден или удален", exc_info=True)
         raise ValueError("Файл не найден или удален.")
 
     except pd.errors.EmptyDataError:
+        logger.error(f"Файл {file_path} не содержит данные", exc_info=True)
         raise ValueError("Файл не содержит данные.")
 
 
