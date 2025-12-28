@@ -113,8 +113,13 @@ def get_exchange_rates(currencies: list[str]) -> list[dict]:
         response = requests.get(url)
         response.raise_for_status()
 
-    except requests.exceptions.RequestException as error:
-        raise ConnectionError(f"Ошибка при запросе: {error}.")
+    except requests.exceptions.HTTPError as error:
+        status_code = error.response.status_code
+        raise ConnectionError(f"HTTP ошибка, код ошибки: {status_code}.")
+    except requests.exceptions.ConnectionError as error:
+        raise ConnectionError(f"Ошибка соединения: {error}.")
+    except requests.exceptions.Timeout as error:
+        raise TimeoutError(f"Таймаут запроса: {error}.")
 
     currencies_data = response.json().get("Valute", {})
 
