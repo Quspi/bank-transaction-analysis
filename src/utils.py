@@ -1,7 +1,8 @@
 import datetime
+import json
 import os
 from typing import Union
-import json
+
 import pandas as pd
 import requests
 from dotenv import load_dotenv
@@ -28,7 +29,7 @@ def load_user_settings(file_path: str) -> dict[str, list[str]]:
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             try:
-                user_settings = json.load(file)
+                user_settings: dict[str, list[str]] = json.load(file)
             except json.JSONDecodeError:
                 raise ValueError("Файл повреждён или пуст.")
 
