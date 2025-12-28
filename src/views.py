@@ -20,13 +20,18 @@ def get_main_page_data(date: str) -> str:
     """Возвращает json ответ для страницы `Главная`."""
     try:
         datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        logger.info(f"Дата {date} успешно преобразована")
     except ValueError:
-        return json.dumps({"error": "Неверный формат даты. Ожидается YYYY-MM-DD HH:MM:SS"}, ensure_ascii=False)
+        logger.error(f"Ошибка формата даты {date}", exc_info=True)
+        return json.dumps({"error": "Ошибка формата даты. Ожидается YYYY-MM-DD HH:MM:SS"}, ensure_ascii=False)
 
     try:
         main_page_data = collect_data_for_main_page(date)
+        logger.info("Данные для страницы 'Главная' успешно сформированы")
     except (ValueError, ConnectionError) as error:
+        logger.error(f"Ошибка: {error}", exc_info=True)
         return json.dumps({"error": str(error)}, ensure_ascii=False)
 
     result = json.dumps(main_page_data, indent=4, ensure_ascii=False)
+    logger.info("Данные успешно преобразованы в JSON ответ")
     return result
