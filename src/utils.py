@@ -7,9 +7,12 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-from config import TRANSACTIONS_PATH, USER_SETTINGS_PATH
-
 load_dotenv()
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+TRANSACTIONS_PATH = os.path.join(BASE_DIR, "data", "operations.xlsx")
+USER_SETTINGS_PATH = os.path.join(BASE_DIR, "user_settings.json")
 
 
 def get_greetings() -> str:
