@@ -157,7 +157,7 @@ def get_top_transactions(df: pd.DataFrame) -> list[dict]:
 def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataFrame:
     """Возвращает транзакции с начала месяца (1-е число) до указанной даты включительно."""
     end_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-    logger.info(f"Дата {date_string} успешно преобразована в datetime, формат: %Y-%m-%d %H:%M:%S")
+    logger.info(f"Дата {date_string} успешно преобразована в datetime")
     start_date = end_date.replace(day=1)
 
     try:
