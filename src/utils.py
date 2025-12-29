@@ -296,7 +296,7 @@ def get_expenses_report(df: pd.DataFrame) -> dict[str, Any]:
     """Рассчитывает статистику по расходам, сгруппированных по категориям."""
     try:
         filtered_expenses = df.loc[
-            (df["Сумма операции"] < 0) & (df["Статус"] == "OK") & (df["Валюта платежа"] == "RUB")
+            (df["Сумма операции"] < 0) & (df["Статус"] == "OK") & (df["Валюта операции"] == "RUB")
         ].copy()
         filtered_expenses["Сумма операции"] = filtered_expenses["Сумма операции"].abs()
         logger.info("Данные успешно отфильтрованы")
