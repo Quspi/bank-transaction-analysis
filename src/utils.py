@@ -192,11 +192,11 @@ def filter_transactions_by_period(df: pd.DataFrame, date_string: str, period: st
         logger.error("Ошибка в структуре данных", exc_info=True)
         raise KeyError("Ошибка в структуре данных.")
 
-    if period:
-        filter_by_period = df.loc[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
+    if start_date is None:
+        filter_by_period = df.loc[df["Дата операции"] <= end_date]
         logger.info(f"Успешно отфильтровано по дате: {date_string}, всего транзакций: {len(filter_by_period)}")
     else:
-        filter_by_period = df.loc[df["Дата операции"] <= end_date]
+        filter_by_period = df.loc[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
         logger.info(f"Успешно отфильтровано по дате: {date_string}, всего транзакций: {len(filter_by_period)}")
 
     if filter_by_period.empty:
