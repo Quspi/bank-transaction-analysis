@@ -154,27 +154,56 @@ def get_top_transactions(df: pd.DataFrame) -> list[dict]:
     return result
 
 
-def filter_transactions_by_month(df: pd.DataFrame, date_string: str) -> pd.DataFrame:
-    """Возвращает транзакции с начала месяца (1-е число) до указанной даты включительно."""
-    end_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
-    logger.info(f"Дата {date_string} успешно преобразована в datetime")
-    start_date = end_date.replace(day=1)
+def filter_transactions_by_period(df: pd.DataFrame, date_string: str, period: str = "M") -> pd.DataFrame:
+    """Дату принимает в виде строки ГГГГ-ММ-ДД Ч:М:С
+    Фильтрует операции по заданному периоду:
+    M - с начала месяца от указанной даты
+    W - с начала недели от указанной даты
+    Y - с начала года от указанной даты
+    ALL - все операции по указанную дату.
+    """
+    try:
+        end_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        logger.info(f"Дата {date_string} успешно преобразована в datetime")
+
+    except ValueError:
+        logger.error(f"Некорректный формат даты, получено: {date_string}", exc_info=True)
+        raise ValueError("Некорректный формат даты")
+
+    logger.info(f"Фильтрация по периоду: {period}")
+
+    if period == "M":
+        start_date = end_date.replace(day=1)
+    elif period == "W":
+        start_date = end_date - datetime.timedelta(days=end_date.weekday())
+    elif period == "Y":
+        start_date = end_date.replace(day=1, month=1)
+    elif period == "ALL":
+        start_date = None
+    else:
+        logger.error(f"Некорректное значение period, получено: {period}", exc_info=True)
+        raise ValueError("Некорректное значение period")
 
     try:
         df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
         logger.info("Даты успешно преобразованы в datetime, формат: %d.%m.%Y %H:%M:%S")
-        filter_by_month = df.loc[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
-        logger.info(f"Успешно отфильтровано по дате: {date_string}, всего транзакций: {len(filter_by_month)}")
 
     except KeyError:
         logger.error("Ошибка в структуре данных", exc_info=True)
         raise KeyError("Ошибка в структуре данных.")
 
-    if filter_by_month.empty:
+    if period:
+        filter_by_period = df.loc[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
+        logger.info(f"Успешно отфильтровано по дате: {date_string}, всего транзакций: {len(filter_by_period)}")
+    else:
+        filter_by_period = df.loc[df["Дата операции"] <= end_date]
+        logger.info(f"Успешно отфильтровано по дате: {date_string}, всего транзакций: {len(filter_by_period)}")
+
+    if filter_by_period.empty:
         logger.error("Транзакций за указанный период не найдено", exc_info=True)
         raise ValueError("Транзакций за указанный период не найдено.")
 
-    return filter_by_month
+    return filter_by_period
 
 
 def get_exchange_rates(currencies: list[str]) -> list[dict]:
@@ -269,7 +298,7 @@ def collect_data_for_main_page(date: str) -> dict[str, Any]:
     """Собирает данные о транзакциях в словарь для страницы `Главная`."""
     greeting = get_greetings()
     transactions = load_xlsx_transactions(TRANSACTIONS_PATH)
-    filtered_by_date = filter_transactions_by_month(transactions, date)
+    filtered_by_date = filter_transactions_by_period(transactions, date)
     cards = calculate_card_statistics(filtered_by_date)
     top_transactions = get_top_transactions(filtered_by_date)
 
