@@ -341,6 +341,29 @@ def get_expenses_report(df: pd.DataFrame) -> dict[str, Any]:
     return result_dict
 
 
-if __name__ == "__main__":
-    data = load_xlsx_transactions("data/operations.xlsx")
-    print(get_expenses_report(data))
+def get_income_report(df: pd.DataFrame) -> dict[str, Any]:
+    """Рассчитывает статистику по поступлениям сгруппированных по категориям."""
+    try:
+        filtered_incomes = df.loc[
+            (df["Статус"] == "OK") & (df["Сумма операции"] > 0) & (df["Валюта операции"] == "RUB")
+        ]
+        logger.info("Данные успешно отфильтрованы")
+        total_amount = filtered_incomes["Сумма операции"].sum()
+        logger.info(f"Общая сумма поступлений: {total_amount}")
+
+    except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
+        raise KeyError("Ошибка в структуре данных")
+
+    group_by_category = filtered_incomes.groupby("Категория")["Сумма операции"].sum().sort_values(ascending=False)
+
+    incomes_list = []
+
+    for category, amount in group_by_category.items():
+        incomes_list.append({"category": category, "amount": round(float(amount), 2)})
+    logger.info(f"Данные успешно отсортированы по категориям, всего категорий: {len(incomes_list)}")
+
+    result_dict = {"total_amount": round(float(total_amount), 2), "main": incomes_list}
+    logger.info("Успешно рассчитаны суммы поступлений и сгруппированы по категориям")
+
+    return result_dict
