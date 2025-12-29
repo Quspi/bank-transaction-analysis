@@ -290,3 +290,57 @@ def collect_data_for_main_page(date: str) -> dict[str, Any]:
     logger.info(f"Формирование данных для даты {date} успешно завершено")
 
     return result_dict
+
+
+def get_expenses_report(df: pd.DataFrame) -> dict[str, Any]:
+    """Рассчитывает статистику по расходам, сгруппированных по категориям."""
+    try:
+        filtered_expenses = df.loc[
+            (df["Сумма операции"] < 0) & (df["Статус"] == "OK") & (df["Валюта платежа"] == "RUB")
+        ].copy()
+        filtered_expenses["Сумма операции"] = filtered_expenses["Сумма операции"].abs()
+        logger.info("Данные успешно отфильтрованы")
+
+        total_amount = filtered_expenses["Сумма операции"].sum()
+        logger.info(f"Рассчитана общая сумма расходов {float(total_amount)}")
+
+        group_by_category = filtered_expenses.groupby("Категория")["Сумма операции"].sum().sort_values(ascending=False)
+
+    except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
+        raise KeyError("Ошибка в структуре данных")
+
+    top_category = group_by_category.iloc[:7]
+    other_amount = group_by_category.iloc[7:].sum()
+
+    category_list = []
+
+    for category, amount in top_category.items():
+        category_list.append({"category": category, "amount": round(float(amount), 2)})
+    if other_amount > 0:
+        category_list.append({"category": "Остальное", "amount": round(float(other_amount), 2)})
+
+    transfers_cash_df = filtered_expenses[filtered_expenses["Категория"].isin(["Наличные", "Переводы"])]
+    group_by_transfers_cash = (
+        transfers_cash_df.groupby("Категория")["Сумма операции"].sum().sort_values(ascending=False)
+    )
+    logger.info(f"Успешно рассчитаны траты по категориям, всего категорий {len(category_list)}")
+
+    transfers_cash_list = []
+
+    for category, amount in group_by_transfers_cash.items():
+        transfers_cash_list.append({"category": category, "amount": round(float(amount), 2)})
+
+    result_dict = {
+        "total_amount": round(float(total_amount), 2),
+        "main": category_list,
+        "transfers_and_cash": transfers_cash_list,
+    }
+    logger.info("Успешно рассчитаны траты по переводам и наличным")
+
+    return result_dict
+
+
+if __name__ == "__main__":
+    data = load_xlsx_transactions("data/operations.xlsx")
+    print(get_expenses_report(data))
