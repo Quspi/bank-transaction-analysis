@@ -396,3 +396,28 @@ def get_income_report(df: pd.DataFrame) -> dict[str, Any]:
     logger.info("Успешно рассчитаны суммы поступлений и сгруппированы по категориям")
 
     return result_dict
+
+
+def collect_data_for_events_page(date: str, period: str = "M") -> dict[str, Any]:
+    """Собирает данные о транзакциях в словарь для страницы `События`."""
+    transactions = load_xlsx_transactions(TRANSACTIONS_PATH)
+    filtered_by_date = filter_transactions_by_period(transactions, date, period)
+    expenses = get_expenses_report(filtered_by_date)
+    income = get_income_report(filtered_by_date)
+
+    user_settings = load_user_settings(USER_SETTINGS_PATH)
+    user_currencies = get_currencies(user_settings)
+    user_stocks = get_stocks(user_settings)
+
+    currency_rates = get_exchange_rates(user_currencies)
+    stock_prices = get_stock_prices(user_stocks)
+
+    result_dict = {
+        "expenses": expenses,
+        "income": income,
+        "currency_rates": currency_rates,
+        "stock_prices": stock_prices,
+    }
+    logger.info(f"Формирование данных для даты {date} успешно завершено")
+
+    return result_dict
