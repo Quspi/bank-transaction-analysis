@@ -40,6 +40,9 @@ def analyze_cashback_categories(data: pd.DataFrame, year: int, month: int) -> st
         category_dict[category] = round(float(expense) / 100, 2)
     logger.info(f"Получено {len(category_dict)} выгодных категорий")
 
+    if len(category_dict) == 0:
+        logger.warning("Не найдено транзакций за выбранный период")
+
     result = json.dumps(category_dict, indent=4, ensure_ascii=False)
     logger.info("Данные сформированы в JSON ответ")
     return result
