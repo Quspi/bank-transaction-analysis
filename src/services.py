@@ -5,7 +5,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler("logs/utils.log", "a", encoding="utf-8")
+handler = logging.FileHandler("logs/services.log", "a", encoding="utf-8")
 formatter = logging.Formatter(
     "%(asctime)s: %(name)s: %(funcName)s: %(levelname)s: %(message)s", datefmt="%Y.%m.%d %H:%M:%S"
 )
