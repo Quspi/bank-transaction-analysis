@@ -13,16 +13,19 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def analyze_cashback_categories(data: pd.DataFrame, year: int, month: int) -> str:
+def analyze_cashback_categories(data: list[dict], year: int, month: int) -> str:
+    data_df = pd.DataFrame(data)
+    logger.info("Данные преобразованы в DF")
+
     try:
-        data["Дата операции"] = pd.to_datetime(data["Дата операции"], format="%d.%m.%Y %H:%M:%S")
-        filtered_df = data.loc[
-            (data["Дата операции"].dt.year == year)
-            & (data["Дата операции"].dt.month == month)
-            & (data["Сумма операции"] < 0)
-            & (data["Статус"] == "OK")
-            & (data["Валюта платежа"] == "RUB")
-            & (~data["Категория"].isin(["Наличные", "Переводы"]))
+        data_df["Дата операции"] = pd.to_datetime(data_df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+        filtered_df = data_df.loc[
+            (data_df["Дата операции"].dt.year == year)
+            & (data_df["Дата операции"].dt.month == month)
+            & (data_df["Сумма операции"] < 0)
+            & (data_df["Статус"] == "OK")
+            & (data_df["Валюта платежа"] == "RUB")
+            & (~data_df["Категория"].isin(["Наличные", "Переводы"]))
         ].copy()
         logger.info(f"Данные отфильтрованы год {year}, месяц {month}")
         filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
