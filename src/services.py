@@ -24,9 +24,11 @@ def analyze_cashback_categories(data: pd.DataFrame, year: int, month: int) -> st
             & (data["Валюта платежа"] == "RUB")
             & (~data["Категория"].isin(["Наличные", "Переводы"]))
         ].copy()
+        logger.info(f"Данные отфильтрованы год {year}, месяц {month}")
         filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
 
     except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
         raise KeyError("Ошибка в структуре данных.")
 
     group_by_category = filtered_df.groupby("Категория")["Сумма операции"].sum()
@@ -36,6 +38,8 @@ def analyze_cashback_categories(data: pd.DataFrame, year: int, month: int) -> st
 
     for category, expense in top_category.items():
         category_dict[category] = round(float(expense) / 100, 2)
+    logger.info(f"Получено {len(category_dict)} выгодных категорий")
 
     result = json.dumps(category_dict, indent=4, ensure_ascii=False)
+    logger.info("Данные сформированы в JSON ответ")
     return result
