@@ -69,7 +69,9 @@ def investment_bank(month: str, transactions: list[dict[Hashable, Any]], limit: 
             logger.warning(f"Некорректная структура транзакции {transaction}")
             continue
         transaction_date = datetime.datetime.strptime(transaction["Дата операции"], "%d.%m.%Y %H:%M:%S")
-        if transaction_date.strftime("%Y-%m") != month and transaction["Сумма операции"] >= 0:
+        if transaction_date.strftime("%Y-%m") != month:
+            continue
+        if transaction["Сумма операции"] >= 0:
             continue
 
         amount = abs(transaction["Сумма операции"])
