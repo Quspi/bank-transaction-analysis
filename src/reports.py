@@ -57,6 +57,7 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
         filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
 
         if filtered_df.empty:
+            logger.warning("Не найдено операций за выбранный период или выбранной категории")
             return pd.DataFrame(columns=["Период", "Сумма"])
 
     except ValueError:
@@ -179,8 +180,3 @@ def spending_by_workday(transactions: pd.DataFrame, date: Optional[str] = None) 
 
     logger.info("Рассчитаны траты по типу дня недели")
     return result_df
-
-
-# if __name__ == "__main__":
-#    data = load_xlsx_transactions(r"D:\PycharmProjects\My\bank-transaction-analysis\data\operations.xlsx")
-#    print(spending_by_weekday(data, "26-12-2021"))
