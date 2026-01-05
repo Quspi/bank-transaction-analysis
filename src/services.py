@@ -1,6 +1,6 @@
 import json
 import logging
-
+from typing import Any
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ logger.addHandler(handler)
 
 
 def analyze_cashback_categories(data: list[dict], year: int, month: int) -> str:
+    """Вычислят 3 наиболее выгодных категории для выбора повышенного кэшбэка за указанные год и месяц."""
     data_df = pd.DataFrame(data)
     logger.info("Данные преобразованы в DF")
 
