@@ -73,3 +73,46 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
 
     logger.info(f"Рассчитаны траты по категории {category}")
     return result_df
+
+
+def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) -> pd.DataFrame:
+    """Рассчитывает траты за последние 3 месяца с начальной даты по дням недели, и возвращает DataFrame
+    состоящий из Дней недели и Сумм трат в каждый из дней недели за период.
+    Если date (ДД-ММ-ГГГГ) не указана, то берется текущая дата."""
+    if date is None:
+        end_date = datetime.datetime.now()
+    else:
+        end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+    start_date = end_date - relativedelta(months=3)
+    logger.info(f"Расчет по дням недели, с {start_date} по {end_date}")
+
+    try:
+        transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+        filtered_df = transactions.loc[
+            (transactions["Дата операции"] >= start_date)
+            & (transactions["Дата операции"] <= end_date)
+            & (transactions["Статус"] == "OK")
+            & (transactions["Валюта операции"] == "RUB")
+            & (transactions["Сумма операции"] < 0)
+        ].copy()
+        filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
+
+        if filtered_df.empty:
+            return pd.DataFrame(columns=["День недели", "Сумма операции"])
+
+    except ValueError:
+        logger.error(f"Некорректный формат даты {date}", exc_info=True)
+        raise ValueError("Некорректный формат даты.")
+
+    except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
+        raise KeyError("Ошибка в структуре данных.")
+
+    days_dict = {0: "Понедельник", 1: "Вторник", 2: "Среда", 3: "Четверг", 4: "Пятница", 5: "Суббота", 6: "Воскресенье"}
+
+    filtered_df["День недели"] = filtered_df["Дата операции"].dt.weekday
+    result_df = filtered_df.groupby("День недели")["Сумма операции"].mean().round(2).reset_index()
+    result_df["День недели"] = result_df["День недели"].map(days_dict)
+
+    logger.info("Рассчитаны траты по категории по дням недели")
+    return result_df
