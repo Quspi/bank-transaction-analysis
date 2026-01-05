@@ -116,3 +116,20 @@ def search_phone_transactions(transactions: list[dict[str, Any]]) -> str:
     logger.info(f"Найдено {len(result_list)} транзакции")
     result = json.dumps(result_list, indent=4, ensure_ascii=False)
     return result
+
+
+def search_person_transfers(transactions: list[dict[str, Any]]) -> str:
+    """Возвращает список транзакций, состоящий из переводов физическим лицам в формате JSON."""
+    pattern = re.compile(r"[А-Я][а-я]+\s[А-Я]\.")
+    logger.info("Поиск переводов физическим лицам")
+    result_list = []
+
+    for transaction in transactions:
+        if transaction.get("Категория") == "Переводы":
+            description = transaction.get("Описание")
+            if isinstance(description, str) and re.search(pattern, description):
+                result_list.append(transaction)
+
+    logger.info(f"Найдено {len(result_list)} транзакции")
+    result = json.dumps(result_list, indent=4, ensure_ascii=False)
+    return result
