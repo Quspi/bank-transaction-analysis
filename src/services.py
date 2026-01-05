@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import re
@@ -55,8 +56,8 @@ def analyze_cashback_categories(data: list[dict], year: int, month: int) -> str:
 
 
 def investment_bank(month: str, transactions: list[dict[str, Any]], limit: int) -> float:
-    """Рассчитывает сумму, которую можно отложить путём округления трат до заданного предела.
-    Month: строка в формате 'YYYY-MM'"""
+    """Рассчитывает сумму, которую можно отложить путём округления трат до заданного предела limit.
+    Month: строка в формате 'YYYY-MM'."""
     if limit <= 0:
         logger.error(f"Ошибка, {limit} должен быть положительным числом")
         raise ValueError("limit должен быть положительным числом.")
@@ -67,9 +68,8 @@ def investment_bank(month: str, transactions: list[dict[str, Any]], limit: int) 
         if "Дата операции" not in transaction or "Сумма операции" not in transaction:
             logger.warning(f"Некорректная структура транзакции {transaction}")
             continue
-        elif not transaction["Дата операции"].startswith(month):
-            continue
-        elif transaction["Сумма операции"] >= 0:
+        transaction_date = datetime.datetime.strptime(transaction["Дата операции"], "%d.%m.%Y %H:%M:%S")
+        if transaction_date.strftime("%Y-%m") != month and transaction["Сумма операции"] >= 0:
             continue
 
         amount = abs(transaction["Сумма операции"])
