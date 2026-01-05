@@ -108,7 +108,15 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         logger.error("Ошибка в структуре данных DF", exc_info=True)
         raise KeyError("Ошибка в структуре данных.")
 
-    days_dict = {0: "Понедельник", 1: "Вторник", 2: "Среда", 3: "Четверг", 4: "Пятница", 5: "Суббота", 6: "Воскресенье"}
+    days_dict = {
+        0: "Понедельник",
+        1: "Вторник",
+        2: "Среда",
+        3: "Четверг",
+        4: "Пятница",
+        5: "Суббота",
+        6: "Воскресенье",
+    }
 
     filtered_df["День недели"] = filtered_df["Дата операции"].dt.weekday
     result_df = filtered_df.groupby("День недели")["Сумма операции"].mean().round(2).reset_index()
@@ -116,3 +124,61 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
 
     logger.info("Рассчитаны траты по категории по дням недели")
     return result_df
+
+
+def spending_by_workday(transactions: pd.DataFrame, date: Optional[str] = None) -> pd.DataFrame:
+    """Рассчитывает траты за последние 3 месяца с начальной даты по типу дня (рабочий/выходной), и возвращает DataFrame
+    состоящий из типа дня и сумм трат в каждый из дней недели за период.
+    Если date (ДД-ММ-ГГГГ) не указана, то берется текущая дата."""
+    if date is None:
+        end_date = datetime.datetime.now()
+    else:
+        end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+    start_date = end_date - relativedelta(months=3)
+    logger.info(f"Расчет по рабочий/выходной день, с {start_date} по {end_date}")
+
+    try:
+        transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+        filtered_df = transactions.loc[
+            (transactions["Дата операции"] >= start_date)
+            & (transactions["Дата операции"] <= end_date)
+            & (transactions["Статус"] == "OK")
+            & (transactions["Валюта операции"] == "RUB")
+            & (transactions["Сумма операции"] < 0)
+        ].copy()
+        filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
+
+        if filtered_df.empty:
+            logger.warning("Не найдено операций за выбранный период")
+            return pd.DataFrame(columns=["Тип дня", "Сумма операции"])
+
+    except ValueError:
+        logger.error(f"Некорректный формат даты {date}", exc_info=True)
+        raise ValueError("Некорректный формат даты.")
+
+    except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
+        raise KeyError("Ошибка в структуре данных.")
+
+    day_type_dict = {
+        0: "Рабочий",
+        1: "Рабочий",
+        2: "Рабочий",
+        3: "Рабочий",
+        4: "Рабочий",
+        5: "Выходной",
+        6: "Выходной",
+    }
+
+    filtered_df["День недели"] = filtered_df["Дата операции"].dt.weekday
+    filtered_df["Тип дня"] = filtered_df["День недели"].map(day_type_dict)
+    result_df = filtered_df.groupby("Тип дня")["Сумма операции"].mean().round(2).reset_index()
+    result_df = result_df.rename(columns={"Сумма операции": "Сумма"})
+
+    logger.info("Рассчитаны траты по типу дня недели")
+    return result_df
+
+
+# if __name__ == "__main__":
+#    data = load_xlsx_transactions(r"D:\PycharmProjects\My\bank-transaction-analysis\data\operations.xlsx")
+#    print(spending_by_weekday(data, "26-12-2021"))
