@@ -98,6 +98,7 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
 
         if filtered_df.empty:
+            logger.warning("Не найдено операций за выбранный период")
             return pd.DataFrame(columns=["День недели", "Сумма операции"])
 
     except ValueError:
@@ -121,8 +122,9 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
     filtered_df["День недели"] = filtered_df["Дата операции"].dt.weekday
     result_df = filtered_df.groupby("День недели")["Сумма операции"].mean().round(2).reset_index()
     result_df["День недели"] = result_df["День недели"].map(days_dict)
+    result_df = result_df.rename(columns={"Сумма операции": "Сумма"})
 
-    logger.info("Рассчитаны траты по категории по дням недели")
+    logger.info("Рассчитаны траты по дням недели")
     return result_df
 
 
