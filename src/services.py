@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Any
 
 import pandas as pd
@@ -83,3 +84,19 @@ def investment_bank(month: str, transactions: list[dict[str, Any]], limit: int) 
 
     logger.info(f"Рассчитанная сумма округления {total_saved}")
     return round(total_saved, 2)
+
+
+def search_transactions(search_string: str, transactions: list[dict[str, Any]]) -> str:
+    """Возвращает транзакции в описании которых есть строка поиска в формате JSON."""
+    result_list = []
+    logger.info(f"Поиск по {search_string} в описании")
+    pattern = re.escape(search_string)
+
+    for transaction in transactions:
+        description = transaction.get("Описание")
+        if isinstance(description, str) and re.search(pattern, description, flags=re.I):
+            result_list.append(transaction)
+
+    logger.info(f"Найдено {len(result_list)} транзакции")
+    result = json.dumps(result_list, indent=4, ensure_ascii=False)
+    return result
