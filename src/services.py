@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, Hashable
 
 import pandas as pd
 
@@ -55,7 +55,7 @@ def analyze_cashback_categories(data: list[dict], year: int, month: int) -> str:
     return result
 
 
-def investment_bank(month: str, transactions: list[dict[str, Any]], limit: int) -> float:
+def investment_bank(month: str, transactions: list[dict[Hashable, Any]], limit: int) -> float:
     """Рассчитывает сумму, которую можно отложить путём округления трат до заданного предела limit.
     Month: строка в формате 'YYYY-MM'."""
     if limit <= 0:
@@ -86,7 +86,7 @@ def investment_bank(month: str, transactions: list[dict[str, Any]], limit: int) 
     return round(total_saved, 2)
 
 
-def search_transactions(search_string: str, transactions: list[dict[str, Any]]) -> str:
+def search_transactions(search_string: str, transactions: list[dict[Hashable, Any]]) -> str:
     """Возвращает транзакции в описании которых есть строка поиска в формате JSON."""
     result_list = []
     logger.info(f"Поиск по {search_string} в описании")
@@ -102,7 +102,7 @@ def search_transactions(search_string: str, transactions: list[dict[str, Any]]) 
     return result
 
 
-def search_phone_transactions(transactions: list[dict[str, Any]]) -> str:
+def search_phone_transactions(transactions: list[dict[Hashable, Any]]) -> str:
     """Возвращает транзакции с номерами телефонов в описании в формате JSON."""
     pattern = re.compile(r"\+\d\s\d{3}\s\d{2,3}-\d{2}-\d{2}")
     logger.info("Поиск транзакций с номерами телефонов")
@@ -118,7 +118,7 @@ def search_phone_transactions(transactions: list[dict[str, Any]]) -> str:
     return result
 
 
-def search_person_transfers(transactions: list[dict[str, Any]]) -> str:
+def search_person_transfers(transactions: list[dict[Hashable, Any]]) -> str:
     """Возвращает список транзакций, состоящий из переводов физическим лицам в формате JSON."""
     pattern = re.compile(r"[А-Я][а-я]+\s[А-Я]\.")
     logger.info("Поиск переводов физическим лицам")
