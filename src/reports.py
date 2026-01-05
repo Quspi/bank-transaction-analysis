@@ -100,7 +100,7 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
 
         if filtered_df.empty:
             logger.warning("Не найдено операций за выбранный период")
-            return pd.DataFrame(columns=["День недели", "Сумма операции"])
+            return pd.DataFrame(columns=["День недели", "Сумма"])
 
     except ValueError:
         logger.error(f"Некорректный формат даты {date}", exc_info=True)
