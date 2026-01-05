@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import Any
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -50,3 +51,35 @@ def analyze_cashback_categories(data: list[dict], year: int, month: int) -> str:
     result = json.dumps(category_dict, indent=4, ensure_ascii=False)
     logger.info("Данные сформированы в JSON ответ")
     return result
+
+
+def investment_bank(month: str, transactions: list[dict[str, Any]], limit: int) -> float:
+    """Рассчитывает сумму, которую можно отложить путём округления трат до заданного предела.
+    Month: строка в формате 'YYYY-MM'"""
+    if limit <= 0:
+        logger.error(f"Ошибка, {limit} должен быть положительным числом")
+        raise ValueError("limit должен быть положительным числом.")
+
+    total_saved = 0.0
+
+    for transaction in transactions:
+        if "Дата операции" not in transaction or "Сумма операции" not in transaction:
+            logger.warning(f"Некорректная структура транзакции {transaction}")
+            continue
+        elif not transaction["Дата операции"].startswith(month):
+            continue
+        elif transaction["Сумма операции"] >= 0:
+            continue
+
+        amount = abs(transaction["Сумма операции"])
+        remainder = amount % limit
+
+        if remainder > 0:
+            rounded = amount + (limit - remainder)
+        else:
+            rounded = amount
+
+        total_saved += rounded - amount
+
+    logger.info(f"Рассчитанная сумма округления {total_saved}")
+    return round(total_saved, 2)
