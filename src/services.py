@@ -100,3 +100,19 @@ def search_transactions(search_string: str, transactions: list[dict[str, Any]]) 
     logger.info(f"Найдено {len(result_list)} транзакции")
     result = json.dumps(result_list, indent=4, ensure_ascii=False)
     return result
+
+
+def search_phone_transactions(transactions: list[dict[str, Any]]) -> str:
+    """Возвращает транзакции с номерами телефонов в описании в формате JSON."""
+    pattern = re.compile(r"\+\d\s\d{3}\s\d{2,3}-\d{2}-\d{2}")
+    logger.info("Поиск транзакций с номерами телефонов")
+    result_list = []
+
+    for transaction in transactions:
+        description = transaction.get("Описание")
+        if isinstance(description, str) and re.search(pattern, description):
+            result_list.append(transaction)
+
+    logger.info(f"Найдено {len(result_list)} транзакции")
+    result = json.dumps(result_list, indent=4, ensure_ascii=False)
+    return result
