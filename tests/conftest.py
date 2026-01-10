@@ -407,3 +407,10 @@ def no_expenses(valid_operations):
     df = valid_operations.copy()
     df["Сумма операции"] = df["Сумма операции"].abs()
     return df
+
+
+@pytest.fixture
+def no_incomes(valid_operations):
+    df = valid_operations.copy()
+    df["Сумма операции"] = -df["Сумма операции"].abs()
+    return df
