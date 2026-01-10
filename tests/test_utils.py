@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from src.utils import (calculate_card_statistics, get_currencies, get_greetings, get_stocks, load_user_settings,
-                       load_xlsx_transactions)
+from src.utils import (calculate_card_statistics, get_currencies, get_greetings, get_stocks, get_top_transactions,
+                       load_user_settings, load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -133,5 +133,38 @@ def test_invalid_data_calculate_card_statistics(invalid_operations):
 
 def test_empty_result_calculate_card_statistics(invalid_status_operations):
     result = calculate_card_statistics(invalid_status_operations)
+    expected_result = []
+    assert result == expected_result
+
+
+def test_get_top_transactions(valid_operations):
+    result = get_top_transactions(valid_operations)
+    expected_result = [
+        {
+            "date": "30.12.2021",
+            "amount": 174000.0,
+            "category": "Пополнения",
+            "description": "Пополнение через Газпромбанк",
+        },
+        {"date": "30.12.2021", "amount": -20000.0, "category": "Переводы", "description": "Константин Л."},
+        {
+            "date": "30.12.2021",
+            "amount": 5046.0,
+            "category": "Пополнения",
+            "description": "Пополнение через Газпромбанк",
+        },
+        {"date": "28.12.2021", "amount": -1840.0, "category": "Дом и ремонт", "description": "Галамарт"},
+        {"date": "29.12.2021", "amount": -1411.4, "category": "Ж/д билеты", "description": "РЖД"},
+    ]
+    assert result == expected_result
+
+
+def test_invalid_data_get_top_transactions(invalid_operations):
+    with pytest.raises(KeyError, match="Ошибка в структуре данных."):
+        get_top_transactions(invalid_operations)
+
+
+def test_empty_result_get_top_transactions(invalid_status_operations):
+    result = get_top_transactions(invalid_status_operations)
     expected_result = []
     assert result == expected_result
