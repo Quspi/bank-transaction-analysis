@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from src.utils import (calculate_card_statistics, get_currencies, get_greetings, get_stocks, get_top_transactions,
-                       load_user_settings, load_xlsx_transactions)
+from src.utils import (calculate_card_statistics, filter_transactions_by_period, get_currencies, get_greetings,
+                       get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -168,3 +168,38 @@ def test_empty_result_get_top_transactions(invalid_status_operations):
     result = get_top_transactions(invalid_status_operations)
     expected_result = []
     assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "period, expected_start",
+    [
+        ("M", "2021-12-01"),
+        ("W", "2021-12-27"),
+        ("Y", "2021-01-01"),
+        ("ALL", None),
+    ],
+)
+def test_filter_transactions_by_period(valid_operations, period, expected_start):
+    end_date = "2021-12-31 00:00:00"
+    result = filter_transactions_by_period(valid_operations, end_date, period)
+    if expected_start:
+        assert result["Дата операции"].min() >= pd.Timestamp(expected_start)
+    assert result["Дата операции"].max() <= pd.Timestamp(end_date)
+
+
+@pytest.mark.parametrize(
+    "date, period, match",
+    [
+        ("31-12-2021", "M", "Некорректный формат даты"),
+        ("2021-12-31 00:00:00", "invalid", "Некорректное значение period"),
+        ("2025-12-31 00:00:00", "Y", "Транзакций за указанный период не найдено."),
+    ],
+)
+def test_invalid_period_transactions_by_period(valid_operations, date, period, match):
+    with pytest.raises(ValueError, match=match):
+        filter_transactions_by_period(valid_operations, date, period)
+
+
+def test_invalid_data_transactions_by_period(invalid_operations):
+    with pytest.raises(KeyError, match="Ошибка в структуре данных."):
+        filter_transactions_by_period(invalid_operations, "2021-12-31 00:00:00", "W")
