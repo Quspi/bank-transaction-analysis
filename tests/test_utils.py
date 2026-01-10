@@ -1,10 +1,11 @@
 import json
 from unittest.mock import mock_open, patch
 
+import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from src.utils import get_currencies, get_greetings, get_stocks, load_user_settings
+from src.utils import get_currencies, get_greetings, get_stocks, load_user_settings, load_xlsx_transactions
 
 
 @pytest.mark.parametrize(
@@ -83,3 +84,32 @@ def test_invalid_data_get_stocks():
     invalid_data = {"key": []}
     with pytest.raises(KeyError):
         get_stocks(invalid_data)
+
+
+@patch("src.utils.pd.read_excel")
+def test_load_xlsx_transactions(mocked_read_xlsx):
+    df = pd.DataFrame({"col": [1]})
+    mocked_read_xlsx.return_value = df
+    result = load_xlsx_transactions("test.xlsx")
+    pd.testing.assert_frame_equal(result, df)
+
+
+@patch("src.utils.pd.read_excel", side_effect=pd.errors.EmptyDataError)
+def test_empty_df_load_xlsx_transactions(mocked_read_xlsx):
+    with pytest.raises(ValueError, match="Файл не содержит данные."):
+        load_xlsx_transactions("empty.xlsx")
+        mocked_read_xlsx.assert_called_once_with("empty.xlsx")
+
+
+@patch("src.utils.pd.read_excel", side_effect=FileNotFoundError)
+def test_invalid_path_load_xlsx_transactions(mocked_read_xlsx):
+    with pytest.raises(ValueError, match="Файл не найден или удален."):
+        load_xlsx_transactions("not_found.xlsx")
+        mocked_read_xlsx.assert_called_once_with("not_found.xlsx")
+
+
+@patch("src.utils.pd.read_excel", side_effect=KeyError)
+def test_invalid_sheet_name_load_xlsx_transactions(mocked_read_xlsx):
+    with pytest.raises(KeyError):
+        load_xlsx_transactions("file.xlsx", sheet_name="invalid")
+        mocked_read_xlsx.assert_called_once_with("file.xlsx", sheet_name="invalid")
