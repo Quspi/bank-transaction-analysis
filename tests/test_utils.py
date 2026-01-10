@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from src.utils import get_currencies, get_greetings, get_stocks, load_user_settings, load_xlsx_transactions
+from src.utils import (calculate_card_statistics, get_currencies, get_greetings, get_stocks, load_user_settings,
+                       load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -113,3 +114,24 @@ def test_invalid_sheet_name_load_xlsx_transactions(mocked_read_xlsx):
     with pytest.raises(KeyError):
         load_xlsx_transactions("file.xlsx", sheet_name="invalid")
         mocked_read_xlsx.assert_called_once_with("file.xlsx", sheet_name="invalid")
+
+
+def test_calculate_card_statistics(valid_operations):
+    result = calculate_card_statistics(valid_operations)
+    expected_result = [
+        {"last_digits": "4556", "total_spent": 2822.8, "cashback": 28.23},
+        {"last_digits": "5091", "total_spent": 2497.28, "cashback": 24.97},
+        {"last_digits": "7197", "total_spent": 24257.72, "cashback": 242.58},
+    ]
+    assert result == expected_result
+
+
+def test_invalid_data_calculate_card_statistics(invalid_operations):
+    with pytest.raises(KeyError, match="Ошибка в структуре данных."):
+        calculate_card_statistics(invalid_operations)
+
+
+def test_empty_result_calculate_card_statistics(invalid_status_operations):
+    result = calculate_card_statistics(invalid_status_operations)
+    expected_result = []
+    assert result == expected_result
