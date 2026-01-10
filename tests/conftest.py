@@ -358,6 +358,8 @@ def valid_operations():
     }
 
     df = pd.DataFrame(data)
+    df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+
     return df
 
 
@@ -392,4 +394,6 @@ def invalid_status_operations():
     }
 
     df = pd.DataFrame(data)
+    df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+
     return df
