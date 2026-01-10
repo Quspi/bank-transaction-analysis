@@ -6,9 +6,9 @@ import pytest
 import requests
 from freezegun import freeze_time
 
-from src.utils import (calculate_card_statistics, filter_transactions_by_period, get_currencies, get_exchange_rates,
-                       get_greetings, get_stock_prices, get_stocks, get_top_transactions, load_user_settings,
-                       load_xlsx_transactions)
+from src.utils import (calculate_card_statistics, collect_data_for_main_page, filter_transactions_by_period,
+                       get_currencies, get_exchange_rates, get_greetings, get_stock_prices, get_stocks,
+                       get_top_transactions, load_user_settings, load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -343,3 +343,62 @@ def test_key_error_get_stock_prices(mock_getenv, mock_get, mock_sleep):
     mock_get.return_value.json.return_value = {"Global Quote": {"invalid_key_1": "AAPL", "invalid_key_2": "150.0"}}
     with pytest.raises(KeyError):
         get_stock_prices(["AAPL"])
+
+
+@patch("src.utils.get_greetings")
+@patch("src.utils.load_xlsx_transactions")
+@patch("src.utils.filter_transactions_by_period")
+@patch("src.utils.calculate_card_statistics")
+@patch("src.utils.get_top_transactions")
+@patch("src.utils.load_user_settings")
+@patch("src.utils.get_currencies")
+@patch("src.utils.get_stocks")
+@patch("src.utils.get_exchange_rates")
+@patch("src.utils.get_stock_prices")
+def test_collect_data_for_main_page(
+    mock_stock_prices,
+    mock_exchange_rates,
+    mock_stocks,
+    mock_currencies,
+    mock_user_settings,
+    mock_top_transactions,
+    mock_card_statistics,
+    mock_transactions_by_period,
+    mock_xlsx_transactions,
+    mock_get_greetings,
+):
+    mock_get_greetings.return_value = "Добрый день"
+    mock_stock_prices.return_value = [{"stock": "AAPL", "currency": "USD", "price": 150.0}]
+    mock_exchange_rates.return_value = [{"currency": "USD", "rate": 75.5}]
+    mock_stocks.return_value = ["AAPL"]
+    mock_currencies.return_value = ["USD"]
+    mock_user_settings.return_value = {"user_currencies": ["USD"], "user_stocks": ["AAPL"]}
+    mock_top_transactions.return_value = []
+    mock_card_statistics.return_value = [
+        {"last_digits": "4556", "total_spent": 2822.8, "cashback": 28.23},
+        {"last_digits": "5091", "total_spent": 2497.28, "cashback": 24.97},
+        {"last_digits": "7197", "total_spent": 24257.72, "cashback": 242.58},
+    ]
+    mock_transactions_by_period.return_value = pd.DataFrame()
+    mock_xlsx_transactions.return_value = pd.DataFrame()
+
+    result = collect_data_for_main_page("2021-12-23 02:34:12")
+    expected_result = {
+        "greeting": "Добрый день",
+        "cards": [
+            {"last_digits": "4556", "total_spent": 2822.8, "cashback": 28.23},
+            {"last_digits": "5091", "total_spent": 2497.28, "cashback": 24.97},
+            {"last_digits": "7197", "total_spent": 24257.72, "cashback": 242.58},
+        ],
+        "top_transactions": [],
+        "currency_rates": [{"currency": "USD", "rate": 75.5}],
+        "stock_prices": [{"stock": "AAPL", "currency": "USD", "price": 150.0}],
+    }
+    assert result == expected_result
+
+
+@patch("src.utils.load_xlsx_transactions")
+def test_error_collect_data_for_main_page(mock_load_xlsx):
+    mock_load_xlsx.side_effect = ValueError
+    with pytest.raises(ValueError):
+        collect_data_for_main_page("2021-12-23 02:00:12")
