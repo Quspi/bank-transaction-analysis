@@ -7,7 +7,8 @@ import requests
 from freezegun import freeze_time
 
 from src.utils import (calculate_card_statistics, filter_transactions_by_period, get_currencies, get_exchange_rates,
-                       get_greetings, get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
+                       get_greetings, get_stock_prices, get_stocks, get_top_transactions, load_user_settings,
+                       load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -256,3 +257,89 @@ def test_invalid_currency_get_exchange_rates(mock_get):
     result = get_exchange_rates(["currency"])
     expected_result = []
     assert result == expected_result
+
+
+@patch("time.sleep")
+@patch("requests.get")
+@patch("os.getenv")
+def test_get_stock_prices(mock_getenv, mock_get, mock_sleep):
+    mock_get.return_value.json.return_value = {"Global Quote": {"01. symbol": "AAPL", "05. price": "150.0"}}
+    mock_sleep.return_value = None
+    mock_getenv.return_value = "api_key"
+    result = get_stock_prices(["AAPL"])
+    expected_result = [{"stock": "AAPL", "currency": "USD", "price": 150.0}]
+    assert result == expected_result
+
+
+def test_empty_result_get_stock_prices():
+    result = get_stock_prices([])
+    expected_result = []
+    assert result == expected_result
+
+
+@patch("time.sleep")
+@patch("requests.get")
+@patch("os.getenv")
+def test_http_error_get_stock_prices(mock_getenv, mock_get, mock_sleep):
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = Mock(status_code=404)
+    mock_get.side_effect = http_error
+    mock_getenv.return_value = "api_key"
+    mock_sleep.return_value = None
+
+    result = get_stock_prices(["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"])
+    expected_result = []
+    assert result == expected_result
+    assert mock_get.call_count == 5
+
+
+@patch("time.sleep")
+@patch("requests.get")
+@patch("os.getenv")
+def test_connection_error_get_stock_prices(mock_getenv, mock_get, mock_sleep):
+    mock_get.side_effect = requests.exceptions.ConnectionError
+    mock_getenv.return_value = "api_key"
+    mock_sleep.return_value = None
+
+    result = get_stock_prices(["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"])
+    expected_result = []
+    assert result == expected_result
+    assert mock_get.call_count == 5
+
+
+@patch("time.sleep")
+@patch("requests.get")
+@patch("os.getenv")
+def test_timeout_error_get_stock_prices(mock_getenv, mock_get, mock_sleep):
+    mock_get.side_effect = requests.exceptions.Timeout
+    mock_getenv.return_value = "api_key"
+    mock_sleep.return_value = None
+
+    result = get_stock_prices(["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"])
+    expected_result = []
+    assert result == expected_result
+    assert mock_get.call_count == 5
+
+
+@patch("time.sleep")
+@patch("requests.get")
+@patch("os.getenv")
+def test_invalid_response_get_stock_prices(mock_getenv, mock_get, mock_sleep):
+    mock_getenv.return_value = "api_key"
+    mock_sleep.return_value = None
+    mock_get.return_value.json.return_value = {"invalid key": {"01. symbol": "AAPL", "05. price": "150.0"}}
+    result = get_stock_prices(["AAPL"])
+    expected_result = []
+    assert result == expected_result
+    mock_get.assert_called_once()
+
+
+@patch("time.sleep")
+@patch("requests.get")
+@patch("os.getenv")
+def test_key_error_get_stock_prices(mock_getenv, mock_get, mock_sleep):
+    mock_getenv.return_value = "api_key"
+    mock_sleep.return_value = None
+    mock_get.return_value.json.return_value = {"Global Quote": {"invalid_key_1": "AAPL", "invalid_key_2": "150.0"}}
+    with pytest.raises(KeyError):
+        get_stock_prices(["AAPL"])
