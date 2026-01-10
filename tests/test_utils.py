@@ -4,7 +4,7 @@ from unittest.mock import mock_open, patch
 import pytest
 from freezegun import freeze_time
 
-from src.utils import get_currencies, get_greetings, load_user_settings
+from src.utils import get_currencies, get_greetings, get_stocks, load_user_settings
 
 
 @pytest.mark.parametrize(
@@ -71,3 +71,15 @@ def test_invalid_data_get_currencies():
     invalid_data = {"key": []}
     with pytest.raises(KeyError):
         get_currencies(invalid_data)
+
+
+def test_get_stocks(valid_settings):
+    result = get_stocks(valid_settings)
+    expected_result = ["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"]
+    assert result == expected_result
+
+
+def test_invalid_data_get_stocks():
+    invalid_data = {"key": []}
+    with pytest.raises(KeyError):
+        get_stocks(invalid_data)
