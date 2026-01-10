@@ -6,9 +6,10 @@ import pytest
 import requests
 from freezegun import freeze_time
 
-from src.utils import (calculate_card_statistics, collect_data_for_main_page, filter_transactions_by_period,
-                       get_currencies, get_exchange_rates, get_expenses_report, get_greetings, get_income_report,
-                       get_stock_prices, get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
+from src.utils import (calculate_card_statistics, collect_data_for_events_page, collect_data_for_main_page,
+                       filter_transactions_by_period, get_currencies, get_exchange_rates, get_expenses_report,
+                       get_greetings, get_income_report, get_stock_prices, get_stocks, get_top_transactions,
+                       load_user_settings, load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -498,3 +499,50 @@ def test_empty_result_get_income_report(no_incomes):
     expected_result = {"total_amount": 0.0, "main": []}
     assert result == expected_result
     assert len(expected_result["main"]) == 0
+
+
+@patch("src.utils.load_xlsx_transactions")
+@patch("src.utils.filter_transactions_by_period")
+@patch("src.utils.get_expenses_report")
+@patch("src.utils.get_income_report")
+@patch("src.utils.load_user_settings")
+@patch("src.utils.get_currencies")
+@patch("src.utils.get_stocks")
+@patch("src.utils.get_exchange_rates")
+@patch("src.utils.get_stock_prices")
+def test_collect_data_for_events_page(
+    mock_stock_prices,
+    mock_exchange_rates,
+    mock_stocks,
+    mock_currencies,
+    mock_user_settings,
+    mock_income,
+    mock_expenses,
+    mock_filter,
+    mock_load_xlsx,
+):
+    mock_load_xlsx.return_value = pd.DataFrame()
+    mock_filter.return_value = pd.DataFrame()
+    mock_expenses.return_value = {"total_amount": 100, "main": [], "transfers_and_cash": []}
+    mock_income.return_value = {"total_amount": 50, "main": []}
+    mock_user_settings.return_value = {"user_currencies": ["USD"], "user_stocks": ["AAPL"]}
+    mock_currencies.return_value = ["USD"]
+    mock_stocks.return_value = ["AAPL"]
+    mock_exchange_rates.return_value = [{"currency": "USD", "rate": 75.5}]
+    mock_stock_prices.return_value = [{"stock": "AAPL", "currency": "USD", "price": 150.0}]
+
+    result = collect_data_for_events_page("2021-12-31 00:00:00")
+    expected = {
+        "expenses": {"total_amount": 100, "main": [], "transfers_and_cash": []},
+        "income": {"total_amount": 50, "main": []},
+        "currency_rates": [{"currency": "USD", "rate": 75.5}],
+        "stock_prices": [{"stock": "AAPL", "currency": "USD", "price": 150.0}],
+    }
+    assert result == expected
+
+
+@patch("src.utils.load_xlsx_transactions")
+def test_error_collect_data_for_events_page(mock_load_xlsx):
+    mock_load_xlsx.side_effect = ValueError
+    with pytest.raises(ValueError):
+        collect_data_for_events_page("2021-12-23 02:00:00")
