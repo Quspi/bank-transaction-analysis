@@ -1,12 +1,13 @@
 import json
-from unittest.mock import mock_open, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pandas as pd
 import pytest
+import requests
 from freezegun import freeze_time
 
-from src.utils import (calculate_card_statistics, filter_transactions_by_period, get_currencies, get_greetings,
-                       get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
+from src.utils import (calculate_card_statistics, filter_transactions_by_period, get_currencies, get_exchange_rates,
+                       get_greetings, get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -203,3 +204,55 @@ def test_invalid_period_transactions_by_period(valid_operations, date, period, m
 def test_invalid_data_transactions_by_period(invalid_operations):
     with pytest.raises(KeyError, match="Ошибка в структуре данных."):
         filter_transactions_by_period(invalid_operations, "2021-12-31 00:00:00", "W")
+
+
+@patch("requests.get")
+def test_get_exchange_rates(mock_get):
+    mock_get.return_value.json.return_value = {"Valute": {"USD": {"CharCode": "USD", "Value": 75.5}}}
+    result = get_exchange_rates(["USD"])
+    assert result == [{"currency": "USD", "rate": 75.5}]
+
+
+def test_empty_result_get_exchange_rates():
+    result = get_exchange_rates([])
+    expected_result = []
+    assert result == expected_result
+
+
+@patch("requests.get")
+def test_http_error_get_exchange_rates(mock_get):
+    http_error = requests.exceptions.HTTPError()
+    http_error.response = Mock(status_code=404)
+    mock_get.side_effect = http_error
+    with pytest.raises(ConnectionError, match="HTTP ошибка, код ошибки:"):
+        get_exchange_rates(["USD"])
+
+
+@patch("requests.get")
+def test_connection_error_get_exchange_rates(mock_get):
+    mock_get.side_effect = requests.exceptions.ConnectionError
+    with pytest.raises(ConnectionError, match="Ошибка соединения:"):
+        get_exchange_rates(["USD"])
+
+
+@patch("requests.get")
+def test_timeout_error_get_exchange_rates(mock_get):
+    mock_get.side_effect = requests.exceptions.Timeout
+    with pytest.raises(TimeoutError, match="Таймаут запроса:"):
+        get_exchange_rates(["USD"])
+
+
+@patch("requests.get")
+def test_invalid_response_get_exchange_rates(mock_get):
+    mock_get.return_value.json.return_value = {"key": {"USD": {"CharCode": "USD", "Value": 75.5}}}
+    result = get_exchange_rates(["USD"])
+    expected_result = []
+    assert result == expected_result
+
+
+@patch("requests.get")
+def test_invalid_currency_get_exchange_rates(mock_get):
+    mock_get.return_value.json.return_value = {"Valute": {"USD": {"CharCode": "USD", "Value": 75.5}}}
+    result = get_exchange_rates(["currency"])
+    expected_result = []
+    assert result == expected_result
