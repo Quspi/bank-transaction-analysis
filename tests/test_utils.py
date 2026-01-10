@@ -4,7 +4,7 @@ from unittest.mock import mock_open, patch
 import pytest
 from freezegun import freeze_time
 
-from src.utils import get_greetings, load_user_settings
+from src.utils import get_currencies, get_greetings, load_user_settings
 
 
 @pytest.mark.parametrize(
@@ -59,3 +59,15 @@ def test_invalid_data_load_user_settings():
                 load_user_settings("invalid.json")
                 mocked_open.assert_called_once_with("invalid.json", "r", encoding="utf-8")
                 mocked_load.assert_called_once()
+
+
+def test_get_currencies(valid_settings):
+    result = get_currencies(valid_settings)
+    expected_result = ["USD", "EUR"]
+    assert result == expected_result
+
+
+def test_invalid_data_get_currencies():
+    invalid_data = {"key": []}
+    with pytest.raises(KeyError):
+        get_currencies(invalid_data)
