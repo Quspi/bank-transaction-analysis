@@ -359,7 +359,6 @@ def valid_operations():
 
     df = pd.DataFrame(data)
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
-
     return df
 
 
@@ -374,26 +373,37 @@ def invalid_operations():
 
 
 @pytest.fixture
-def invalid_status_operations():
-    data = {
-        "Дата операции": ["31.12.2021 16:44:00"],
-        "Дата платежа": ["31.12.2021"],
-        "Номер карты": ["*7197"],
-        "Статус": ["FAILED"],
-        "Сумма операции": [-100],
-        "Валюта операции": ["RUB"],
-        "Сумма платежа": [-100],
-        "Валюта платежа": ["RUB"],
-        "Кэшбэк": [""],
-        "Категория": ["Супермаркеты"],
-        "MCC": [5411.0],
-        "Описание": ["Колхоз"],
-        "Бонусы (включая кэшбэк)": [0.0],
-        "Округление на инвесткопилку": [0.0],
-        "Сумма операции с округлением": [100.0],
-    }
-
-    df = pd.DataFrame(data)
+def invalid_status_operations(valid_operations):
+    df = valid_operations.copy()
+    df["Статус"] = "FAILED"
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+    return df
 
+
+@pytest.fixture
+def less_7_categories(valid_operations):
+    df = valid_operations.copy()
+    df = df.head(5)
+    return df
+
+
+@pytest.fixture
+def exactly_7_categories(valid_operations):
+    df = valid_operations.copy()
+    unique = df["Категория"].unique()[:7]
+    df = df[df["Категория"].isin(unique)]
+    return df
+
+
+@pytest.fixture
+def no_transfers_cash(valid_operations):
+    df = valid_operations.copy()
+    df = df[~df["Категория"].isin(["Переводы", "Наличные"])]
+    return df
+
+
+@pytest.fixture
+def no_expenses(valid_operations):
+    df = valid_operations.copy()
+    df["Сумма операции"] = df["Сумма операции"].abs()
     return df
