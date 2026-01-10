@@ -7,8 +7,8 @@ import requests
 from freezegun import freeze_time
 
 from src.utils import (calculate_card_statistics, collect_data_for_main_page, filter_transactions_by_period,
-                       get_currencies, get_exchange_rates, get_greetings, get_stock_prices, get_stocks,
-                       get_top_transactions, load_user_settings, load_xlsx_transactions)
+                       get_currencies, get_exchange_rates, get_expenses_report, get_greetings, get_stock_prices,
+                       get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -402,3 +402,79 @@ def test_error_collect_data_for_main_page(mock_load_xlsx):
     mock_load_xlsx.side_effect = ValueError
     with pytest.raises(ValueError):
         collect_data_for_main_page("2021-12-23 02:00:12")
+
+
+def test_get_expenses_report(valid_operations):
+    result = get_expenses_report(valid_operations)
+    expected_result = {
+        "total_amount": 29577.8,
+        "main": [
+            {"category": "Переводы", "amount": 20800.0},
+            {"category": "Ж/д билеты", "amount": 2822.8},
+            {"category": "Дом и ремонт", "amount": 2500.1},
+            {"category": "Супермаркеты", "amount": 1264.76},
+            {"category": "Каршеринг", "amount": 965.14},
+            {"category": "Различные товары", "amount": 564.0},
+            {"category": "Канцтовары", "amount": 349.0},
+            {"category": "Остальное", "amount": 312.0},
+        ],
+        "transfers_and_cash": [{"category": "Переводы", "amount": 20800.0}],
+    }
+    assert result == expected_result
+
+
+def test_less_7_categories_get_expenses_report(less_7_categories):
+    result = get_expenses_report(less_7_categories)
+    expected_result = {
+        "total_amount": 985.06,
+        "main": [{"category": "Различные товары", "amount": 564.0}, {"category": "Супермаркеты", "amount": 421.06}],
+        "transfers_and_cash": [],
+    }
+    assert result == expected_result
+
+
+def test_7_categories_get_expenses_report(exactly_7_categories):
+    result = get_expenses_report(exactly_7_categories)
+    expected_result = {
+        "total_amount": 26765.7,
+        "main": [
+            {"category": "Переводы", "amount": 20800.0},
+            {"category": "Ж/д билеты", "amount": 2822.8},
+            {"category": "Супермаркеты", "amount": 1264.76},
+            {"category": "Каршеринг", "amount": 965.14},
+            {"category": "Различные товары", "amount": 564.0},
+            {"category": "Канцтовары", "amount": 349.0},
+        ],
+        "transfers_and_cash": [{"category": "Переводы", "amount": 20800.0}],
+    }
+    assert result == expected_result
+
+
+def test_no_categories_get_expenses_report(no_transfers_cash):
+    result = get_expenses_report(no_transfers_cash)
+    expected_result = {
+        "total_amount": 8777.8,
+        "main": [
+            {"category": "Ж/д билеты", "amount": 2822.8},
+            {"category": "Дом и ремонт", "amount": 2500.1},
+            {"category": "Супермаркеты", "amount": 1264.76},
+            {"category": "Каршеринг", "amount": 965.14},
+            {"category": "Различные товары", "amount": 564.0},
+            {"category": "Канцтовары", "amount": 349.0},
+            {"category": "Фастфуд", "amount": 154.0},
+            {"category": "Остальное", "amount": 158.0},
+        ],
+        "transfers_and_cash": [],
+    }
+    assert result == expected_result
+
+
+def test_no_expenses_get_expenses_report(no_expenses):
+    result = get_expenses_report(no_expenses)
+    expected_result = {"total_amount": 0.0, "main": [], "transfers_and_cash": []}
+    assert result == expected_result
+
+
+def test_invalid_data_get_expenses_report(invalid_operations):
+    with pytest.raises(KeyError, match="Ошибка в структуре данных"):
+        get_expenses_report(invalid_operations)
