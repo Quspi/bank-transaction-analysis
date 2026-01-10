@@ -7,8 +7,8 @@ import requests
 from freezegun import freeze_time
 
 from src.utils import (calculate_card_statistics, collect_data_for_main_page, filter_transactions_by_period,
-                       get_currencies, get_exchange_rates, get_expenses_report, get_greetings, get_stock_prices,
-                       get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
+                       get_currencies, get_exchange_rates, get_expenses_report, get_greetings, get_income_report,
+                       get_stock_prices, get_stocks, get_top_transactions, load_user_settings, load_xlsx_transactions)
 
 
 @pytest.mark.parametrize(
@@ -467,6 +467,7 @@ def test_no_categories_get_expenses_report(no_transfers_cash):
         "transfers_and_cash": [],
     }
     assert result == expected_result
+    assert len(expected_result["main"]) == 8
 
 
 def test_no_expenses_get_expenses_report(no_expenses):
@@ -478,3 +479,22 @@ def test_no_expenses_get_expenses_report(no_expenses):
 def test_invalid_data_get_expenses_report(invalid_operations):
     with pytest.raises(KeyError, match="Ошибка в структуре данных"):
         get_expenses_report(invalid_operations)
+
+
+def test_get_income_report(valid_operations):
+    result = get_income_report(valid_operations)
+    expected_result = {"total_amount": 179046.0, "main": [{"category": "Пополнения", "amount": 179046.0}]}
+    assert result == expected_result
+    assert len(expected_result["main"]) == 1
+
+
+def test_invalid_data_get_income_report(invalid_operations):
+    with pytest.raises(KeyError, match="Ошибка в структуре данных"):
+        get_income_report(invalid_operations)
+
+
+def test_empty_result_get_income_report(no_incomes):
+    result = get_income_report(no_incomes)
+    expected_result = {"total_amount": 0.0, "main": []}
+    assert result == expected_result
+    assert len(expected_result["main"]) == 0
