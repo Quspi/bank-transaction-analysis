@@ -414,3 +414,19 @@ def no_incomes(valid_operations):
     df = valid_operations.copy()
     df["Сумма операции"] = -df["Сумма операции"].abs()
     return df
+
+
+@pytest.fixture
+def less_3_categories(valid_operations):
+    df = valid_operations.copy()
+    unique = df["Категория"].unique()[:2]
+    df = df[df["Категория"].isin(unique)]
+    return df
+
+
+@pytest.fixture
+def exactly_3_categories(valid_operations):
+    df = valid_operations.copy()
+    unique = df["Категория"].unique()[:7]
+    df = df[df["Категория"].isin(unique)]
+    return df
