@@ -2,7 +2,8 @@ import json
 
 import pytest
 
-from src.services import analyze_cashback_categories, investment_bank, search_phone_transactions, search_transactions
+from src.services import (analyze_cashback_categories, investment_bank, search_person_transfers,
+                          search_phone_transactions, search_transactions)
 
 
 def test_analyze_cashback_categories(valid_operations):
@@ -298,6 +299,55 @@ def test_search_phone_transactions(transactions_with_phones):
 
 def test_empty_result_search_phone_transactions(dict_transactions):
     result = search_phone_transactions(dict_transactions)
+    expected_result = []
+    expected_json = json.dumps(expected_result, indent=4, ensure_ascii=False)
+    assert result == expected_json
+
+
+def test_search_person_transfers(dict_transactions):
+    result = search_person_transfers(dict_transactions)
+    expected_result = [
+        {
+            "Дата операции": "31.12.2021 00:12:53",
+            "Дата платежа": "31.12.2021",
+            "Номер карты": "*5091",
+            "Статус": "OK",
+            "Сумма операции": -800.0,
+            "Валюта операции": "RUB",
+            "Сумма платежа": -800.0,
+            "Валюта платежа": "RUB",
+            "Кэшбэк": "",
+            "Категория": "Переводы",
+            "MCC": 5411.0,
+            "Описание": "Константин Л.",
+            "Бонусы (включая кэшбэк)": 0.0,
+            "Округление на инвесткопилку": 0.0,
+            "Сумма операции с округлением": 800.0,
+        },
+        {
+            "Дата операции": "30.12.2021 22:22:03",
+            "Дата платежа": "31.12.2021",
+            "Номер карты": "*7197",
+            "Статус": "OK",
+            "Сумма операции": -20000.0,
+            "Валюта операции": "RUB",
+            "Сумма платежа": -20000.0,
+            "Валюта платежа": "RUB",
+            "Кэшбэк": "",
+            "Категория": "Переводы",
+            "MCC": 5411.0,
+            "Описание": "Константин Л.",
+            "Бонусы (включая кэшбэк)": 0.0,
+            "Округление на инвесткопилку": 0.0,
+            "Сумма операции с округлением": 20000.0,
+        },
+    ]
+    expected_json = json.dumps(expected_result, indent=4, ensure_ascii=False)
+    assert result == expected_json
+
+
+def test_empty_result_search_person_transfers(no_description):
+    result = search_person_transfers(no_description)
     expected_result = []
     expected_json = json.dumps(expected_result, indent=4, ensure_ascii=False)
     assert result == expected_json
