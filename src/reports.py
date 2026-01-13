@@ -133,14 +133,14 @@ def spending_by_workday(transactions: pd.DataFrame, date: Optional[str] = None) 
     """Рассчитывает траты за последние 3 месяца с начальной даты по типу дня (рабочий/выходной), и возвращает DataFrame
     состоящий из типа дня и сумм трат в каждый из дней недели за период.
     Если date (ДД-ММ-ГГГГ) не указана, то берется текущая дата."""
-    if date is None:
-        end_date = datetime.datetime.now()
-    else:
-        end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
-    start_date = end_date - relativedelta(months=3)
-    logger.info(f"Расчет по рабочий/выходной день, с {start_date} по {end_date}")
-
     try:
+        if date is None:
+            end_date = datetime.datetime.now()
+        else:
+            end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+        start_date = end_date - relativedelta(months=3)
+        logger.info(f"Расчет по рабочий/выходной день, с {start_date} по {end_date}")
+
         transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
         filtered_df = transactions.loc[
             (transactions["Дата операции"] >= start_date)
