@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from src.reports import save_report, spending_by_category
+from src.reports import save_report, spending_by_category, spending_by_weekday
 
 
 @save_report()
@@ -62,3 +62,33 @@ def test_no_data_spending_by_category(valid_operations):
 def test_invalid_date_spending_by_category(valid_operations):
     with pytest.raises(ValueError, match="Некорректный формат даты"):
         spending_by_category(valid_operations, "Супермаркеты", "32-21-2021")
+
+
+def test_spending_by_weekday(valid_operations):
+    result = spending_by_weekday(valid_operations, "31-12-2021")
+    result_dict = result.to_dict(orient="records")
+    expected_result = [
+        {"День недели": "Понедельник", "Сумма": 57.88},
+        {"День недели": "Вторник", "Сумма": 485.08},
+        {"День недели": "Среда", "Сумма": 678.58},
+        {"День недели": "Четверг", "Сумма": 5089.35},
+        {"День недели": "Воскресенье", "Сумма": 415.32},
+    ]
+    assert result_dict == expected_result
+
+
+def test_invalid_data_spending_by_weekday(invalid_operations):
+    with pytest.raises(KeyError, match="Ошибка в структуре данных."):
+        spending_by_weekday(invalid_operations)
+
+
+def test_invalid_date_spending_by_weekday(valid_operations):
+    with pytest.raises(ValueError, match="Некорректный формат даты"):
+        spending_by_weekday(valid_operations, "32-21.2021")
+
+
+def test_empty_result_spending_by_weekday(valid_operations):
+    result = spending_by_weekday(valid_operations)
+    result_dict = result.to_dict(orient="records")
+    expected_result = []
+    assert result_dict == expected_result
