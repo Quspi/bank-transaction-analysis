@@ -430,3 +430,16 @@ def exactly_3_categories(valid_operations):
     unique = df["Категория"].unique()[:7]
     df = df[df["Категория"].isin(unique)]
     return df
+
+
+@pytest.fixture
+def dict_transactions(valid_operations):
+    valid_operations["Дата операции"] = valid_operations["Дата операции"].dt.strftime("%d.%m.%Y %H:%M:%S")
+    return valid_operations.to_dict(orient="records")
+
+
+@pytest.fixture
+def transaction_multiple(dict_transactions):
+    modified = dict_transactions.copy()
+    modified[0]["Сумма операции"] = -100.0
+    return modified
