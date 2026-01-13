@@ -14,6 +14,7 @@ def df_func():
 def test_save_report_no_filename():
     result = df_func()
     assert os.path.exists("data/df_func_report.json")
+    assert isinstance(result, pd.DataFrame)
     os.remove("data/df_func_report.json")
 
 
@@ -25,6 +26,7 @@ def func_with_df():
 def test_save_report_with_filename():
     result = func_with_df()
     assert os.path.exists("data/test_name_report.json")
+    assert isinstance(result, pd.DataFrame)
     os.remove("data/test_name_report.json")
 
 
