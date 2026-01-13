@@ -463,5 +463,5 @@ def transactions_with_phones(dict_transactions):
     copy_dict_transactions = dict_transactions.copy()
     for i, t in enumerate(copy_dict_transactions):
         if i % 5 == 0:
-            t["Описание"] = f"Пополнение +7 995 555-55-55"
+            t["Описание"] = "Пополнение +7 995 555-55-55"
     return copy_dict_transactions
