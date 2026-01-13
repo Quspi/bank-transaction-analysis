@@ -236,12 +236,12 @@ def valid_operations():
             5411.0,
             5411.0,
             5399.0,
-            None,
-            None,
+            5411.0,
+            5411.0,
             7512.0,
             7512.0,
-            None,
-            None,
+            5411.0,
+            5411.0,
             5943.0,
             4112.0,
             4112.0,
@@ -455,4 +455,13 @@ def description_not_string(dict_transactions):
     copy_dict_transactions = dict_transactions.copy()
     for t in copy_dict_transactions:
         t["Описание"] = 9999
+    return copy_dict_transactions
+
+
+@pytest.fixture
+def transactions_with_phones(dict_transactions):
+    copy_dict_transactions = dict_transactions.copy()
+    for i, t in enumerate(copy_dict_transactions):
+        if i % 5 == 0:
+            t["Описание"] = f"Пополнение +7 995 555-55-55"
     return copy_dict_transactions
