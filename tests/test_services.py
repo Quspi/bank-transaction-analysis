@@ -67,6 +67,7 @@ def test_wrong_date_investment_bank(dict_transactions, month):
 
 
 def test_no_expenses_investment_bank(no_expenses):
+    no_expenses.to_dict(orient="records")
     result = investment_bank("2021-12", no_expenses, 50)
     expected_result = 0.0
     assert result == expected_result
