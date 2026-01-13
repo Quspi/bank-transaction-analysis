@@ -440,6 +440,19 @@ def dict_transactions(valid_operations):
 
 @pytest.fixture
 def transaction_multiple(dict_transactions):
-    modified = dict_transactions.copy()
-    modified[0]["Сумма операции"] = -100.0
-    return modified
+    copy_dict_transactions = dict_transactions.copy()
+    copy_dict_transactions[0]["Сумма операции"] = -100.0
+    return copy_dict_transactions
+
+
+@pytest.fixture
+def no_description(dict_transactions):
+    return [{k: v for k, v in t.items() if k != "Описание"} for t in dict_transactions]
+
+
+@pytest.fixture
+def description_not_string(dict_transactions):
+    copy_dict_transactions = dict_transactions.copy()
+    for t in copy_dict_transactions:
+        t["Описание"] = 9999
+    return copy_dict_transactions
