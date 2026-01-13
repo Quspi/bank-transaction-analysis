@@ -37,14 +37,14 @@ def save_report(file_name: Optional[str] = None) -> Callable:
 def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
     """Рассчитывает траты по выбранной категории за последние 3 месяца с начальной даты, и возвращает DataFrame
     состоящий из Периода и Суммы за период. Если date (ДД-ММ-ГГГГ) не указана, то берется текущая дата."""
-    if date is None:
-        end_date = datetime.datetime.now()
-    else:
-        end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
-    start_date = end_date - relativedelta(months=3)
-    logger.info(f"Расчет по категории {category}, с {start_date} по {end_date}")
-
     try:
+        if date is None:
+            end_date = datetime.datetime.now()
+        else:
+            end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+        start_date = end_date - relativedelta(months=3)
+        logger.info(f"Расчет по категории {category}, с {start_date} по {end_date}")
+
         transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
         filtered_df = transactions.loc[
             (transactions["Категория"] == category)
