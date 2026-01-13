@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src.services import analyze_cashback_categories, investment_bank
+from src.services import analyze_cashback_categories, investment_bank, search_transactions
 
 
 def test_analyze_cashback_categories(valid_operations):
@@ -78,3 +78,108 @@ def test_transaction_multiple_investment_bank(transaction_multiple):
     expected_result = 633.09
     assert result == expected_result
     assert isinstance(result, float)
+
+
+def test_search_transactions(dict_transactions):
+    result = search_transactions("колхоз", dict_transactions)
+    expected_result = [
+        {
+            "Дата операции": "31.12.2021 16:44:00",
+            "Дата платежа": "31.12.2021",
+            "Номер карты": "*7197",
+            "Статус": "OK",
+            "Сумма операции": -160.89,
+            "Валюта операции": "RUB",
+            "Сумма платежа": -160.89,
+            "Валюта платежа": "RUB",
+            "Кэшбэк": "",
+            "Категория": "Супермаркеты",
+            "MCC": 5411.0,
+            "Описание": "Колхоз",
+            "Бонусы (включая кэшбэк)": 3.0,
+            "Округление на инвесткопилку": 0.0,
+            "Сумма операции с округлением": 160.89,
+        },
+        {
+            "Дата операции": "31.12.2021 16:42:04",
+            "Дата платежа": "31.12.2021",
+            "Номер карты": "*7197",
+            "Статус": "OK",
+            "Сумма операции": -64.0,
+            "Валюта операции": "RUB",
+            "Сумма платежа": -64.0,
+            "Валюта платежа": "RUB",
+            "Кэшбэк": "",
+            "Категория": "Супермаркеты",
+            "MCC": 5411.0,
+            "Описание": "Колхоз",
+            "Бонусы (включая кэшбэк)": 1.0,
+            "Округление на инвесткопилку": 0.0,
+            "Сумма операции с округлением": 64.0,
+        },
+        {
+            "Дата операции": "31.12.2021 15:44:39",
+            "Дата платежа": "31.12.2021",
+            "Номер карты": "*7197",
+            "Статус": "OK",
+            "Сумма операции": -78.05,
+            "Валюта операции": "RUB",
+            "Сумма платежа": -78.05,
+            "Валюта платежа": "RUB",
+            "Кэшбэк": "",
+            "Категория": "Супермаркеты",
+            "MCC": 5411.0,
+            "Описание": "Колхоз",
+            "Бонусы (включая кэшбэк)": 1.0,
+            "Округление на инвесткопилку": 0.0,
+            "Сумма операции с округлением": 78.05,
+        },
+        {
+            "Дата операции": "28.12.2021 13:44:39",
+            "Дата платежа": "28.12.2021",
+            "Номер карты": "*7197",
+            "Статус": "OK",
+            "Сумма операции": -381.48,
+            "Валюта операции": "RUB",
+            "Сумма платежа": -381.48,
+            "Валюта платежа": "RUB",
+            "Кэшбэк": "",
+            "Категория": "Супермаркеты",
+            "MCC": 5411.0,
+            "Описание": "Колхоз",
+            "Бонусы (включая кэшбэк)": 7.0,
+            "Округление на инвесткопилку": 0.0,
+            "Сумма операции с округлением": 381.48,
+        },
+    ]
+    expected_json = json.dumps(expected_result, indent=4, ensure_ascii=False)
+    assert result == expected_json
+    assert len(expected_json) == len(result)
+    assert isinstance(result, str)
+
+
+def test_empty_result_search_transactions(dict_transactions):
+    result = search_transactions("Каршеринг", dict_transactions)
+    expected_result = []
+    expected_json = json.dumps(expected_result)
+    assert result == expected_json
+    assert len(expected_json) == len(result)
+    assert isinstance(result, str)
+
+
+def test_wrong_type_description_search_transactions(description_not_string):
+    result = search_transactions("Такси", description_not_string)
+    expected_result = []
+    expected_json = json.dumps(expected_result)
+    assert result == expected_json
+    assert len(expected_json) == len(result)
+    assert isinstance(result, str)
+
+
+def test_no_description_search_transactions(no_description):
+    result = search_transactions("Супермаркеты", no_description)
+    expected_result = []
+    expected_json = json.dumps(expected_result)
+    assert result == expected_json
+    assert len(expected_json) == len(result)
+    assert isinstance(result, str)
