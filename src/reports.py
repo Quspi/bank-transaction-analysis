@@ -1,0 +1,182 @@
+import datetime
+import logging
+from typing import Any, Callable, Optional
+
+import pandas as pd
+from dateutil.relativedelta import relativedelta
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler("logs/reports.log", "a", encoding="utf-8")
+formatter = logging.Formatter(
+    "%(asctime)s: %(name)s: %(funcName)s: %(levelname)s: %(message)s", datefmt="%Y.%m.%d %H:%M:%S"
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
+def save_report(file_name: Optional[str] = None) -> Callable:
+    """Сохраняет результат работы функций-отчетов в JSON файл."""
+
+    def decorator(function: Callable) -> Callable:
+
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            filename = file_name or f"{function.__name__}"
+            result = function(*args, **kwargs)
+
+            if isinstance(result, pd.DataFrame):
+                result.to_json(f"data/{filename}_report.json", orient="records", indent=4, force_ascii=False)
+
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
+    """Рассчитывает траты по выбранной категории за последние 3 месяца с начальной даты, и возвращает DataFrame
+    состоящий из Периода и Суммы за период. Если date (ДД-ММ-ГГГГ) не указана, то берется текущая дата."""
+    try:
+        if date is None:
+            end_date = datetime.datetime.now()
+        else:
+            end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+        start_date = end_date - relativedelta(months=3)
+        logger.info(f"Расчет по категории {category}, с {start_date} по {end_date}")
+
+        transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+        filtered_df = transactions.loc[
+            (transactions["Категория"] == category)
+            & (transactions["Дата операции"] >= start_date)
+            & (transactions["Дата операции"] <= end_date)
+            & (transactions["Статус"] == "OK")
+            & (transactions["Валюта операции"] == "RUB")
+            & (transactions["Сумма операции"] < 0)
+        ].copy()
+        filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
+
+        if filtered_df.empty:
+            logger.warning("Не найдено операций за выбранный период или выбранной категории")
+            return pd.DataFrame(columns=["Период", "Сумма"])
+
+    except ValueError:
+        logger.error(f"Некорректный формат даты {date}", exc_info=True)
+        raise ValueError("Некорректный формат даты.")
+
+    except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
+        raise KeyError("Ошибка в структуре данных.")
+
+    filtered_df["Период"] = filtered_df["Дата операции"].dt.strftime("%Y-%m")
+    grouped = filtered_df.groupby("Период")["Сумма операции"].sum().reset_index()
+    result_df: pd.DataFrame = grouped.rename(columns={"Сумма операции": "Сумма"})
+
+    logger.info(f"Рассчитаны траты по категории {category}")
+    return result_df
+
+
+def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) -> pd.DataFrame:
+    """Рассчитывает траты за последние 3 месяца с начальной даты по дням недели, и возвращает DataFrame
+    состоящий из Дней недели и Сумм трат в каждый из дней недели за период.
+    Если date (ДД-ММ-ГГГГ) не указана, то берется текущая дата."""
+    try:
+        if date is None:
+            end_date = datetime.datetime.now()
+        else:
+            end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+        start_date = end_date - relativedelta(months=3)
+        logger.info(f"Расчет по дням недели, с {start_date} по {end_date}")
+
+        transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+        filtered_df = transactions.loc[
+            (transactions["Дата операции"] >= start_date)
+            & (transactions["Дата операции"] <= end_date)
+            & (transactions["Статус"] == "OK")
+            & (transactions["Валюта операции"] == "RUB")
+            & (transactions["Сумма операции"] < 0)
+        ].copy()
+        filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
+
+        if filtered_df.empty:
+            logger.warning("Не найдено операций за выбранный период")
+            return pd.DataFrame(columns=["День недели", "Сумма"])
+
+    except ValueError:
+        logger.error(f"Некорректный формат даты {date}", exc_info=True)
+        raise ValueError("Некорректный формат даты.")
+
+    except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
+        raise KeyError("Ошибка в структуре данных.")
+
+    days_dict = {
+        0: "Понедельник",
+        1: "Вторник",
+        2: "Среда",
+        3: "Четверг",
+        4: "Пятница",
+        5: "Суббота",
+        6: "Воскресенье",
+    }
+
+    filtered_df["День недели"] = filtered_df["Дата операции"].dt.weekday
+    result_df = filtered_df.groupby("День недели")["Сумма операции"].mean().round(2).reset_index()
+    result_df["День недели"] = result_df["День недели"].map(days_dict)
+    result_df = result_df.rename(columns={"Сумма операции": "Сумма"})
+
+    logger.info("Рассчитаны траты по дням недели")
+    return result_df
+
+
+def spending_by_workday(transactions: pd.DataFrame, date: Optional[str] = None) -> pd.DataFrame:
+    """Рассчитывает траты за последние 3 месяца с начальной даты по типу дня (рабочий/выходной), и возвращает DataFrame
+    состоящий из типа дня и сумм трат в каждый из дней недели за период.
+    Если date (ДД-ММ-ГГГГ) не указана, то берется текущая дата."""
+    try:
+        if date is None:
+            end_date = datetime.datetime.now()
+        else:
+            end_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+        start_date = end_date - relativedelta(months=3)
+        logger.info(f"Расчет по рабочий/выходной день, с {start_date} по {end_date}")
+
+        transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+        filtered_df = transactions.loc[
+            (transactions["Дата операции"] >= start_date)
+            & (transactions["Дата операции"] <= end_date)
+            & (transactions["Статус"] == "OK")
+            & (transactions["Валюта операции"] == "RUB")
+            & (transactions["Сумма операции"] < 0)
+        ].copy()
+        filtered_df["Сумма операции"] = filtered_df["Сумма операции"].abs()
+
+        if filtered_df.empty:
+            logger.warning("Не найдено операций за выбранный период")
+            return pd.DataFrame(columns=["Тип дня", "Сумма операции"])
+
+    except ValueError:
+        logger.error(f"Некорректный формат даты {date}", exc_info=True)
+        raise ValueError("Некорректный формат даты.")
+
+    except KeyError:
+        logger.error("Ошибка в структуре данных DF", exc_info=True)
+        raise KeyError("Ошибка в структуре данных.")
+
+    day_type_dict = {
+        0: "Рабочий",
+        1: "Рабочий",
+        2: "Рабочий",
+        3: "Рабочий",
+        4: "Рабочий",
+        5: "Выходной",
+        6: "Выходной",
+    }
+
+    filtered_df["День недели"] = filtered_df["Дата операции"].dt.weekday
+    filtered_df["Тип дня"] = filtered_df["День недели"].map(day_type_dict)
+    result_df = filtered_df.groupby("Тип дня")["Сумма операции"].mean().round(2).reset_index()
+    result_df = result_df.rename(columns={"Сумма операции": "Сумма"})
+
+    logger.info("Рассчитаны траты по типу дня недели")
+    return result_df
